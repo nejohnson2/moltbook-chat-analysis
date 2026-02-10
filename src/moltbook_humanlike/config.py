@@ -1,0 +1,69 @@
+"""
+Configuration loading and seed management.
+
+What this does:
+    Loads pipeline settings from a YAML config file and merges any
+    command-line overrides.  Also provides a single function to lock
+    all random-number generators so results are reproducible.
+
+Why it matters:
+    Reproducibility is essential in research.  By centralizing config
+    and seed management, every pipeline stage uses the same settings
+    and produces the same results on every run.
+"""
+
+from __future__ import annotations
+
+import random
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import yaml
+
+
+# ── Defaults (used when keys are absent from the YAML file) ─────────
+DEFAULTS: dict[str, Any] = {
+    "random_seed": 42,
+    "sample_mode": False,
+    "sample_size": 1000,
+    "text_column": "text",
+    "id_column": "post_id",
+    "perplexity_model": "meta-llama/Llama-3.2-1B",
+    "perplexity_fallback_model": "gpt2-medium",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "outlier_contamination": 0.05,
+    "outlier_thresholds": [0.90, 0.95, 0.99],
+    "audit_sample_size": 100,
+    "min_text_length": 10,
+    "max_text_length": 50000,
+}
+
+
+def load_config(
+    path: str | Path = "config.yaml",
+    overrides: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Load YAML config, fill in defaults, and apply CLI overrides."""
+    cfg = dict(DEFAULTS)
+    config_path = Path(path)
+    if config_path.exists():
+        with open(config_path) as f:
+            file_cfg = yaml.safe_load(f) or {}
+        cfg.update(file_cfg)
+    if overrides:
+        cfg.update(overrides)
+    return cfg
+
+
+def set_seeds(seed: int) -> None:
+    """Set random seeds for Python, NumPy, and (optionally) PyTorch."""
+    random.seed(seed)
+    np.random.seed(seed)
+    try:
+        import torch
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+    except ImportError:
+        pass
