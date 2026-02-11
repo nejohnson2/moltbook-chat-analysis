@@ -22,6 +22,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from moltbook_humanlike.config import load_config, set_seeds
@@ -36,6 +38,43 @@ from moltbook_humanlike.utils import setup_logging
 from moltbook_humanlike.validate import build_profile
 
 
+def flatten_post_column(df: pd.DataFrame) -> pd.DataFrame:
+    """Flatten the nested 'post' dict column into top-level columns.
+
+    The raw Moltbook dataset stores post metadata as a nested dict in a
+    column called 'post'.  This extracts the useful fields (content, title,
+    submolt name, upvotes, downvotes, comment_count, created_at, url) into
+    their own columns alongside the existing top-level columns (id,
+    topic_label, toxic_level).
+    """
+    if "post" not in df.columns:
+        return df
+
+    post_data = pd.json_normalize(df["post"])
+
+    # Rename nested 'id' to avoid collision with top-level 'id'
+    if "id" in post_data.columns:
+        post_data = post_data.drop(columns=["id"])
+
+    # Extract submolt name from the nested submolt dict
+    if "submolt.name" in post_data.columns:
+        post_data = post_data.rename(columns={"submolt.name": "submolt_name"})
+    if "submolt.display_name" in post_data.columns:
+        post_data = post_data.rename(columns={"submolt.display_name": "submolt_display_name"})
+    # Drop the raw submolt dict columns if present
+    for col in ["submolt", "submolt.id"]:
+        if col in post_data.columns:
+            post_data = post_data.drop(columns=[col])
+
+    # Merge back with top-level columns (drop the raw 'post' column)
+    result = pd.concat(
+        [df.drop(columns=["post"]).reset_index(drop=True),
+         post_data.reset_index(drop=True)],
+        axis=1,
+    )
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate raw Moltbook data")
     parser.add_argument("--config", default="config.yaml")
@@ -48,6 +87,12 @@ def main() -> None:
 
     df = load_parquet("data/raw/posts.parquet")
     logger.info("Loaded %d rows from data/raw/posts.parquet", len(df))
+
+    # Flatten the nested 'post' column into top-level columns
+    if "post" in df.columns:
+        logger.info("Flattening nested 'post' column...")
+        df = flatten_post_column(df)
+        logger.info("Columns after flattening: %s", list(df.columns))
 
     text_col = cfg["text_column"]
     id_col = cfg["id_column"]

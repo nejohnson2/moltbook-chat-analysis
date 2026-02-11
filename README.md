@@ -22,21 +22,80 @@ make setup
 make all
 ```
 
+## Project structure
+
+```
+moltbook-chat-analysis/
+├── Makefile                  # Pipeline orchestration
+├── config.yaml               # Pipeline configuration
+├── requirements.txt          # Python dependencies
+├── pyproject.toml
+├── src/
+│   └── moltbook_humanlike/   # Core library
+│       ├── config.py         # Config loading, seed management
+│       ├── io_utils.py       # Parquet/CSV/JSON I/O helpers
+│       ├── validate.py       # Schema checks, data profiling
+│       ├── outliers.py       # Isolation Forest, LOF, Mahalanobis, ensemble
+│       ├── analysis.py       # Summary tables and plots
+│       ├── audit.py          # Stratified audit sampling
+│       ├── utils.py          # Logging, version capture
+│       └── features/
+│           ├── stylometrics.py   # Lengths, punctuation, capitalization, TTR
+│           ├── lexical.py        # Pronouns, hedges, deixis, anecdotes, typos
+│           ├── perplexity.py     # LM perplexity (Llama 3.2 / GPT-2 fallback)
+│           └── embeddings.py     # Sentence-transformer embeddings + metrics
+├── scripts/                  # Numbered pipeline stages
+│   ├── 01_download_data.py
+│   ├── 02_validate_data.py
+│   ├── 03_build_features.py
+│   ├── 04_detect_outliers.py
+│   ├── 05_analyze_results.py
+│   ├── 06_make_audit_samples.py
+│   ├── 07_sensitivity.py
+│   └── 08_generate_paper.py
+├── notebooks/                # Interactive exploration
+│   ├── 01_explore_raw_data.ipynb
+│   ├── 02_explore_features.ipynb
+│   └── 03_explore_outliers.ipynb
+├── data/
+│   ├── raw/                  # Downloaded from HuggingFace (gitignored)
+│   └── processed/            # Cleaned data (gitignored)
+└── outputs/                  # All pipeline outputs (gitignored)
+```
+
 ## Pipeline stages
 
-| Make target     | Script                      | What it does                                    |
-|-----------------|-----------------------------|-------------------------------------------------|
-| `make data`     | `01_download_data.py`       | Download Moltbook posts from HuggingFace        |
-| `make validate` | `02_validate_data.py`       | Schema checks, missingness, duplicates, quality |
-| `make features` | `03_build_features.py`      | Extract stylometric, lexical, perplexity, and embedding features |
-| `make outliers` | `04_detect_outliers.py`     | Run 3 anomaly detectors + ensemble voting       |
-| `make analyze`  | `05_analyze_results.py`     | Summary tables and plots                        |
-| `make audit`    | `06_make_audit_samples.py`  | Stratified samples for blind human review       |
-| `make sensitivity` | `07_sensitivity.py`      | Rerun detection at 90/95/99% thresholds         |
-| `make all`      | —                           | Run everything end-to-end                       |
-| `make clean`    | —                           | Remove outputs and processed data               |
+| Make target        | Script                     | What it does                                     |
+|--------------------|----------------------------|--------------------------------------------------|
+| `make data`        | `01_download_data.py`      | Download Moltbook posts from HuggingFace         |
+| `make validate`    | `02_validate_data.py`      | Schema checks, missingness, duplicates, quality  |
+| `make features`    | `03_build_features.py`     | Extract stylometric, lexical, perplexity, and embedding features |
+| `make outliers`    | `04_detect_outliers.py`    | Run 3 anomaly detectors + ensemble voting        |
+| `make analyze`     | `05_analyze_results.py`    | Summary tables and plots                         |
+| `make audit`       | `06_make_audit_samples.py` | Stratified samples for blind human review        |
+| `make sensitivity` | `07_sensitivity.py`        | Rerun detection at 90/95/99% thresholds          |
+| `make paper`       | `08_generate_paper.py`     | Generate arXiv-ready LaTeX paper from results    |
+| `make all`         | —                          | Run everything end-to-end                        |
+| `make clean`       | —                          | Remove outputs and processed data                |
 
 Each stage can be run independently given the outputs of prior stages.
+
+## Notebooks
+
+Three Jupyter notebooks are provided in `notebooks/` for interactive exploration and custom plotting:
+
+| Notebook | Purpose |
+|----------|---------|
+| `01_explore_raw_data.ipynb` | Inspect the raw dataset: schema, missingness, text length distributions, category/toxicity/community breakdowns, engagement metrics, duplicates, sample posts |
+| `02_explore_features.ipynb` | Analyze extracted features: summary statistics, histograms for all 19 features, correlation heatmap, box plots by category and toxicity, pairwise scatters, perplexity and embedding deep dives |
+| `03_explore_outliers.ipynb` | Explore detection results: detector score distributions, detector agreement, outlier rates by category and toxicity, flagged vs. unflagged comparisons, PCA projections, inspect individual flagged posts, threshold sensitivity |
+
+Run from the project root with the venv activated:
+
+```bash
+source .venv/bin/activate
+jupyter notebook notebooks/
+```
 
 ## Configuration
 
@@ -101,8 +160,11 @@ outputs/
 ├── audit/
 │   ├── flagged_sample.csv         # Sample of flagged posts for review
 │   └── unflagged_sample.csv       # Sample of unflagged posts for review
-└── sensitivity/
-    └── sensitivity_report.csv     # Stability across threshold choices
+├── sensitivity/
+│   └── sensitivity_report.csv     # Stability across threshold choices
+└── paper/
+    ├── moltbook_humanlike.tex     # arXiv-ready LaTeX paper
+    └── figures/                   # Copies of analysis figures
 ```
 
 ## How to interpret key outputs
@@ -124,7 +186,7 @@ Truncated post text with key features. Designed for blind side-by-side compariso
 
 ## Methodology summary
 
-1. **Features**: 16+ interpretable features spanning surface style (word/sentence length, punctuation, capitalization), discourse markers (pronouns, hedges, temporal references), model-based perplexity (Llama 3.2 / GPT-2), and semantic embeddings (nearest-neighbor distance, local density).
+1. **Features**: 19 interpretable features spanning surface style (word/sentence length, punctuation, capitalization, lexical diversity), discourse markers (pronouns, hedges, temporal references, anecdote markers, typo proxy), model-based perplexity (Llama 3.2 / GPT-2), and semantic embeddings (nearest-neighbor distance, local density, centroid distance).
 
 2. **Outlier detection**: Three unsupervised methods:
    - **Isolation Forest** — isolates anomalies via random partitioning
@@ -147,4 +209,4 @@ Truncated post text with key features. Designed for blind side-by-side compariso
 
 - Python 3.10+
 - ~4 GB disk space (models + data)
-- No GPU required
+- No GPU required (MPS/CUDA used automatically if available)

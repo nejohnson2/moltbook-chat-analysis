@@ -7,9 +7,14 @@ random_seed: 42
 sample_mode: false
 sample_size: 1000
 
-# Column names in the Moltbook posts dataset (verified at runtime)
-text_column: "text"
-id_column: "post_id"
+# Column names in the Moltbook posts dataset
+# The raw "post" column is a nested dict; the pipeline flattens it during validation.
+# After flattening, the text lives in "content" and the ID in "id".
+id_column: "id"
+text_column: "content"
+category_column: "topic_label"
+toxicity_column: "toxic_level"
+submolt_column: "submolt_name"
 
 # Perplexity language model
 # Primary: Llama 3.2 1B (gated — requires HF token and model approval)

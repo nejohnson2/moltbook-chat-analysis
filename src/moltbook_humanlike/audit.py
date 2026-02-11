@@ -66,7 +66,7 @@ def sample_for_audit(
     unflagged_sample = unflagged.sample(n=n_unflagged, random_state=seed)
 
     # Select and format output columns
-    meta_cols = [c for c in ["post_id", "category", "toxicity", "submolt"] if c in df.columns]
+    meta_cols = [c for c in ["id", "topic_label", "toxic_level", "submolt_name"] if c in df.columns]
     score_cols = [c for c in ["iso_forest_score", "lof_score", "mahalanobis_score"] if c in df.columns]
 
     if feature_cols is None:

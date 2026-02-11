@@ -40,7 +40,7 @@ plt.rcParams.update({
 })
 
 
-def category_outlier_table(df: pd.DataFrame, category_col: str = "category") -> pd.DataFrame | None:
+def category_outlier_table(df: pd.DataFrame, category_col: str = "topic_label") -> pd.DataFrame | None:
     """Crosstab of category x ensemble_flag with counts and rates."""
     if category_col not in df.columns:
         logger.warning("Column '%s' not found; skipping category table", category_col)
@@ -55,7 +55,7 @@ def category_outlier_table(df: pd.DataFrame, category_col: str = "category") -> 
     return ct.reset_index()
 
 
-def toxicity_outlier_table(df: pd.DataFrame, toxicity_col: str = "toxicity") -> pd.DataFrame | None:
+def toxicity_outlier_table(df: pd.DataFrame, toxicity_col: str = "toxic_level") -> pd.DataFrame | None:
     """Crosstab of toxicity level x ensemble_flag."""
     if toxicity_col not in df.columns:
         logger.warning("Column '%s' not found; skipping toxicity table", toxicity_col)
@@ -71,7 +71,7 @@ def toxicity_outlier_table(df: pd.DataFrame, toxicity_col: str = "toxicity") -> 
 
 def top_submolts_table(
     df: pd.DataFrame,
-    submolt_col: str = "submolt",
+    submolt_col: str = "submolt_name",
     n: int = 20,
 ) -> pd.DataFrame | None:
     """Top N submolts by outlier rate (minimum 10 posts)."""

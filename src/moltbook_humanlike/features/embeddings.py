@@ -42,10 +42,18 @@ def compute_embeddings(
             logger.info("Loading cached embeddings from %s", cache_path)
             return np.load(cache_path)
 
+    import torch
     from sentence_transformers import SentenceTransformer
 
-    logger.info("Encoding %d texts with %s", len(texts), model_name)
-    model = SentenceTransformer(model_name)
+    # Detect best device (MPS on Apple Silicon, CUDA, or CPU)
+    device = "cpu"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+
+    logger.info("Encoding %d texts with %s (device: %s)", len(texts), model_name, device)
+    model = SentenceTransformer(model_name, device=device)
     embeddings = model.encode(
         texts,
         batch_size=batch_size,

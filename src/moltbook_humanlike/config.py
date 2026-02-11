@@ -27,8 +27,11 @@ DEFAULTS: dict[str, Any] = {
     "random_seed": 42,
     "sample_mode": False,
     "sample_size": 1000,
-    "text_column": "text",
-    "id_column": "post_id",
+    "text_column": "content",
+    "id_column": "id",
+    "category_column": "topic_label",
+    "toxicity_column": "toxic_level",
+    "submolt_column": "submolt_name",
     "perplexity_model": "meta-llama/Llama-3.2-1B",
     "perplexity_fallback_model": "gpt2-medium",
     "embedding_model": "all-MiniLM-L6-v2",
@@ -65,5 +68,20 @@ def set_seeds(seed: int) -> None:
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
-    except ImportError:
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            torch.mps.manual_seed(seed)
+    except (ImportError, AttributeError):
         pass
+
+
+def get_device() -> str:
+    """Return the best available torch device: mps > cuda > cpu."""
+    try:
+        import torch
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"
+        if torch.cuda.is_available():
+            return "cuda"
+    except (ImportError, AttributeError):
+        pass
+    return "cpu"

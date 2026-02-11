@@ -32,6 +32,15 @@ from tqdm import tqdm
 logger = logging.getLogger("moltbook")
 
 
+def _get_device() -> torch.device:
+    """Return the best available torch device: mps > cuda > cpu."""
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return torch.device("mps")
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    return torch.device("cpu")
+
+
 def load_lm(
     model_name: str,
     fallback_model: str = "gpt2-medium",
@@ -41,10 +50,14 @@ def load_lm(
     Tries ``model_name`` first.  If the model is gated or otherwise
     inaccessible, falls back to ``fallback_model``.
 
+    Automatically moves the model to MPS/CUDA if available.
+
     Returns:
-        (model, tokenizer, actual_model_name)
+        (model, tokenizer, actual_model_name, device)
     """
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    device = _get_device()
 
     for name in (model_name, fallback_model):
         try:
@@ -55,10 +68,11 @@ def load_lm(
                 torch_dtype=torch.float32,
             )
             model.eval()
+            model.to(device)
             if tokenizer.pad_token is None:
                 tokenizer.pad_token = tokenizer.eos_token
-            logger.info("Successfully loaded: %s", name)
-            return model, tokenizer, name
+            logger.info("Successfully loaded: %s (device: %s)", name, device)
+            return model, tokenizer, name, device
         except Exception as exc:
             logger.warning(
                 "Could not load '%s': %s. %s",
@@ -77,6 +91,7 @@ def compute_perplexity(
     text: str,
     model: torch.nn.Module,
     tokenizer,
+    device: torch.device,
     max_length: int = 1024,
     stride: int = 512,
 ) -> dict[str, float]:
@@ -103,7 +118,7 @@ def compute_perplexity(
 
     for begin in range(0, seq_len, stride):
         end = min(begin + max_length, seq_len)
-        input_chunk = input_ids[begin:end].unsqueeze(0)
+        input_chunk = input_ids[begin:end].unsqueeze(0).to(device)
 
         with torch.no_grad():
             outputs = model(input_chunk, labels=input_chunk)
@@ -113,7 +128,7 @@ def compute_perplexity(
         targets = input_chunk[:, 1:]
         log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
         token_nlls = -log_probs.gather(2, targets.unsqueeze(-1)).squeeze(-1)
-        all_nlls.extend(token_nlls[0].tolist())
+        all_nlls.extend(token_nlls[0].cpu().tolist())
 
         if end == seq_len:
             break
@@ -146,15 +161,18 @@ def compute_perplexity_features(
             logger.info("Loading cached perplexity features from %s", cache_path)
             return pd.read_parquet(cache_path)
 
-    model, tokenizer, actual_name = load_lm(model_name, fallback_model)
-    logger.info("Computing perplexity for %d texts with %s", len(texts), actual_name)
+    model, tokenizer, actual_name, device = load_lm(model_name, fallback_model)
+    logger.info(
+        "Computing perplexity for %d texts with %s on %s",
+        len(texts), actual_name, device,
+    )
 
     results: list[dict[str, float]] = []
     for text in tqdm(texts, desc="Perplexity"):
         if not text or not str(text).strip():
             results.append({"ppl_mean": 0.0, "ppl_var": 0.0, "ppl_tail_95": 0.0})
         else:
-            results.append(compute_perplexity(str(text), model, tokenizer))
+            results.append(compute_perplexity(str(text), model, tokenizer, device))
 
     df = pd.DataFrame(results)
     df["ppl_model_used"] = actual_name
