@@ -63,8 +63,7 @@ def main() -> None:
     if id_col in posts.columns and id_col in outliers.columns:
         merged = posts.merge(outliers, on=id_col, how="inner")
         merged = merged.merge(
-            features.drop(columns=[id_col], errors="ignore"),
-            left_index=True, right_index=True, how="left",
+            features, on=id_col, how="left",
             suffixes=("", "_feat"),
         )
     else:
@@ -101,7 +100,10 @@ def main() -> None:
 
     plot_feature_distributions(merged, fig_dir)
     plot_outlier_overlap(merged, fig_dir)
-    plot_pca_scatter(features, merged["ensemble_flag"], fig_dir)
+
+    # Pass aligned feature/flag data from merged to avoid index mismatch
+    feat_cols = [c for c in features.columns if c != id_col]
+    plot_pca_scatter(merged[feat_cols], merged["ensemble_flag"], fig_dir)
 
     write_manifest("outputs/analyze", cfg, {
         "stage": "analyze",

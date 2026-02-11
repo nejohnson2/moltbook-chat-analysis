@@ -128,7 +128,20 @@ def compute_perplexity(
         targets = input_chunk[:, 1:]
         log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
         token_nlls = -log_probs.gather(2, targets.unsqueeze(-1)).squeeze(-1)
-        all_nlls.extend(token_nlls[0].cpu().tolist())
+        nll_list = token_nlls[0].cpu().tolist()
+
+        # Only keep NLLs for non-overlapping tokens to avoid double-counting.
+        # For the first window, keep all tokens. For subsequent windows,
+        # skip tokens that were already covered by the previous window.
+        if begin == 0:
+            all_nlls.extend(nll_list)
+        else:
+            # nll_list indices correspond to predicting tokens [begin+1..end-1]
+            # relative to the chunk. The overlap region is tokens [begin..begin+stride-1]
+            # which maps to chunk indices [0..stride-1]. The NLL array is shifted by 1
+            # (predicts token i+1 from token i), so skip the first (stride - 1) entries.
+            skip = stride - 1
+            all_nlls.extend(nll_list[skip:])
 
         if end == seq_len:
             break

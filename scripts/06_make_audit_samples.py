@@ -58,8 +58,7 @@ def main() -> None:
     if id_col in posts.columns and id_col in outliers.columns:
         merged = posts.merge(outliers, on=id_col, how="inner")
         merged = merged.merge(
-            features.drop(columns=[id_col], errors="ignore"),
-            left_index=True, right_index=True, how="left",
+            features, on=id_col, how="left",
             suffixes=("", "_feat"),
         )
     else:

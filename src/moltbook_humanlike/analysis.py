@@ -164,7 +164,10 @@ def plot_pca_scatter(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Exclude any ID-like columns that may be numeric
+    exclude = {"id", "post_id", "index"}
     numeric = features_df.select_dtypes(include=[np.number])
+    numeric = numeric.drop(columns=[c for c in numeric.columns if c in exclude], errors="ignore")
     numeric = numeric.loc[:, numeric.std() > 0].fillna(0)
 
     if numeric.shape[1] < 2:

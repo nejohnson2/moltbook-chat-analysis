@@ -16,7 +16,8 @@ setup: ## Create venv, install deps, download NLTK data
 	python3 -m venv .venv
 	$(PYTHON) -m pip install --upgrade pip
 	$(PYTHON) -m pip install -r requirements.txt
-	$(PYTHON) -c "import nltk; nltk.download('punkt_tab', quiet=True); nltk.download('words', quiet=True)"
+	$(PYTHON) -c "import nltk; nltk.download('punkt_tab', quiet=True)" 2>/dev/null || $(PYTHON) -c "import nltk; nltk.download('punkt', quiet=True)"
+	$(PYTHON) -c "import nltk; nltk.download('words', quiet=True)"
 	@echo "✓ Setup complete. Activate with: source .venv/bin/activate"
 
 data: data/raw/posts.parquet ## Stage 1: Download Moltbook dataset

@@ -53,7 +53,7 @@ def main() -> None:
 
     features = load_parquet("outputs/features/features.parquet")
     id_col = cfg["id_column"]
-    feature_cols = features.select_dtypes(include=["number"])
+    feature_cols = features.drop(columns=[id_col], errors="ignore").select_dtypes(include=["number"])
 
     thresholds = cfg.get("outlier_thresholds", [0.90, 0.95, 0.99])
     logger.info("Testing thresholds: %s", thresholds)

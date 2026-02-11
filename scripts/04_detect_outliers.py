@@ -53,7 +53,7 @@ def main() -> None:
 
     # Separate ID from numeric features
     ids = features[[id_col]] if id_col in features.columns else None
-    feature_cols = features.select_dtypes(include=["number"])
+    feature_cols = features.drop(columns=[id_col], errors="ignore").select_dtypes(include=["number"])
 
     result = detect_outliers(feature_cols, cfg)
 

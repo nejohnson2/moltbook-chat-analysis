@@ -21,11 +21,14 @@ import string
 
 import nltk
 
-# Ensure punkt tokenizer data is available
+# Ensure punkt tokenizer data is available (punkt_tab for NLTK >=3.9.1, punkt for older)
 try:
     nltk.data.find("tokenizers/punkt_tab")
 except LookupError:
-    nltk.download("punkt_tab", quiet=True)
+    try:
+        nltk.download("punkt_tab", quiet=True)
+    except Exception:
+        nltk.download("punkt", quiet=True)
 
 
 def _tokenize_words(text: str) -> list[str]:
