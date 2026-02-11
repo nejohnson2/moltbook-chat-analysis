@@ -176,8 +176,12 @@ def _build_sensitivity_table(rows: list[dict]) -> str:
         rate = _pct(float(r["flag_rate"]))
         overlap = r.get("overlap_with_prev", "--")
         jaccard = r.get("jaccard_with_prev", "--")
-        if jaccard != "--":
+        if overlap in ("", None):
+            overlap = "--"
+        if jaccard not in ("--", "", None):
             jaccard = _fmt(float(jaccard), 3)
+        else:
+            jaccard = "--"
         lines.append(
             f"{thresh} & {n_flag} & {rate} & {overlap} & {jaccard} \\\\"
         )

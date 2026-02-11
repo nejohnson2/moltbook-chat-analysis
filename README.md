@@ -167,6 +167,18 @@ outputs/
     └── figures/                   # Copies of analysis figures
 ```
 
+## Compiling the paper
+
+After running `make paper`, compile the LaTeX output to PDF:
+
+```bash
+cd outputs/paper && pdflatex moltbook_humanlike.tex && pdflatex moltbook_humanlike.tex
+```
+
+Run `pdflatex` twice so that cross-references (tables, figures, labels) resolve correctly. The output is `outputs/paper/moltbook_humanlike.pdf`.
+
+**Prerequisite**: A LaTeX distribution must be installed. On macOS: `brew install --cask mactex` (full) or `brew install --cask basictex` (minimal).
+
 ## How to interpret key outputs
 
 ### `data_profile.json`
