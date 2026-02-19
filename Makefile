@@ -6,7 +6,7 @@
 PYTHON ?= .venv/bin/python
 CONFIG ?= config.yaml
 
-.PHONY: setup data validate features outliers analyze audit sensitivity paper all clean help
+.PHONY: setup data validate features outliers analyze audit sensitivity stats paper all clean help
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -45,10 +45,13 @@ audit: outliers ## Stage 6: Generate audit samples for human review
 sensitivity: features ## Stage 7: Sensitivity analysis across thresholds
 	$(PYTHON) scripts/07_sensitivity.py --config $(CONFIG)
 
+stats: outliers features ## Stage 9: Run statistical tests
+	$(PYTHON) scripts/09_statistical_tests.py --config $(CONFIG)
+
 paper: analyze ## Stage 8: Generate arXiv LaTeX paper from results
 	$(PYTHON) scripts/08_generate_paper.py --config $(CONFIG)
 
-all: data validate features outliers analyze audit sensitivity paper ## Run full pipeline end-to-end
+all: data validate features outliers analyze audit sensitivity stats paper ## Run full pipeline end-to-end
 
 clean: ## Remove generated outputs (keeps raw data)
 	rm -rf outputs/ data/processed/ logs/

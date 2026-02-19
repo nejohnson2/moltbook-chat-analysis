@@ -69,12 +69,17 @@ def run_isolation_forest(
 
 def run_lof(
     X: np.ndarray,
-    contamination: float = 0.05,
 ) -> np.ndarray:
-    """Return LOF anomaly scores (higher = more anomalous)."""
+    """Return LOF anomaly scores (higher = more anomalous).
+
+    Note: We use contamination="auto" (the default) rather than a fixed
+    contamination rate, because the ensemble already applies its own
+    percentile-based threshold.  Setting contamination here would
+    double-threshold the scores.
+    """
     clf = LocalOutlierFactor(
         n_neighbors=20,
-        contamination=contamination,
+        contamination="auto",
         novelty=False,
     )
     clf.fit_predict(X)
@@ -167,7 +172,7 @@ def detect_outliers(
 
     scores = {
         "iso_forest": run_isolation_forest(X, contamination, seed),
-        "lof": run_lof(X, contamination),
+        "lof": run_lof(X),
         "mahalanobis": run_robust_mahalanobis(X),
     }
 

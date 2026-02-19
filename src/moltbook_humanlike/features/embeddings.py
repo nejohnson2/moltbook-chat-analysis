@@ -91,7 +91,9 @@ def compute_embedding_features(
     neighbor_dists = distances[:, 1:]
 
     mean_nn_dist = neighbor_dists.mean(axis=1)
-    local_density = 1.0 / (mean_nn_dist + 1e-10)
+    # Use log-transform to stabilize density: avoids extreme values when
+    # duplicate/near-duplicate embeddings produce near-zero distances.
+    local_density = -np.log(mean_nn_dist + 1e-8)
 
     # Centroid distance
     centroid = embeddings.mean(axis=0, keepdims=True)

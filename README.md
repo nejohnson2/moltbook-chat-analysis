@@ -52,7 +52,8 @@ moltbook-chat-analysis/
 │   ├── 05_analyze_results.py
 │   ├── 06_make_audit_samples.py
 │   ├── 07_sensitivity.py
-│   └── 08_generate_paper.py
+│   ├── 08_generate_paper.py
+│   └── 09_statistical_tests.py
 ├── notebooks/                # Interactive exploration
 │   ├── 01_explore_raw_data.ipynb
 │   ├── 02_explore_features.ipynb
@@ -74,6 +75,7 @@ moltbook-chat-analysis/
 | `make analyze`     | `05_analyze_results.py`    | Summary tables and plots                         |
 | `make audit`       | `06_make_audit_samples.py` | Stratified samples for blind human review        |
 | `make sensitivity` | `07_sensitivity.py`        | Rerun detection at 90/95/99% thresholds          |
+| `make stats`       | `09_statistical_tests.py`  | Chi-squared tests, bootstrap CI, effect sizes    |
 | `make paper`       | `08_generate_paper.py`     | Generate arXiv-ready LaTeX paper from results    |
 | `make all`         | —                          | Run everything end-to-end                        |
 | `make clean`       | —                          | Remove outputs and processed data                |
@@ -109,7 +111,7 @@ Edit `config.yaml` to adjust settings:
 | `perplexity_model`         | `meta-llama/Llama-3.2-1B`    | Primary perplexity model (gated, needs HF token) |
 | `perplexity_fallback_model`| `gpt2-medium`                 | Fallback if primary model unavailable            |
 | `embedding_model`          | `all-MiniLM-L6-v2`           | Sentence-transformer model                       |
-| `outlier_contamination`    | `0.05`                        | Expected outlier fraction for IF/LOF             |
+| `outlier_contamination`    | `0.05`                        | Expected outlier fraction for Isolation Forest   |
 | `outlier_thresholds`       | `[0.90, 0.95, 0.99]`         | Percentile thresholds for sensitivity analysis   |
 | `audit_sample_size`        | `100`                         | Posts per group in audit samples                 |
 
@@ -162,6 +164,8 @@ outputs/
 │   └── unflagged_sample.csv       # Sample of unflagged posts for review
 ├── sensitivity/
 │   └── sensitivity_report.csv     # Stability across threshold choices
+├── stats/
+│   └── statistical_tests.json     # Chi-squared, bootstrap CI, effect sizes
 └── paper/
     ├── moltbook_humanlike.tex     # arXiv-ready LaTeX paper
     └── figures/                   # Copies of analysis figures
@@ -191,21 +195,23 @@ One row per post with columns like `word_count`, `lexical_diversity`, `first_per
 Each row has three detector scores and an `ensemble_flag` (True/False). A post is flagged only if **2 or more** of the 3 detectors consider it an outlier. This conservative rule reduces false positives.
 
 ### `sensitivity_report.csv`
-Shows how many posts are flagged at each threshold (90th/95th/99th percentile). High Jaccard overlap between thresholds means results are stable. Low overlap means the boundary is fuzzy — interpret with caution.
+Shows how many posts are flagged at each threshold (90th/95th/99th percentile). Jaccard similarity measures overlap between consecutive thresholds — moderate values (e.g., 0.3–0.5) indicate that tightening the threshold removes borderline cases while preserving a core set of outliers. Very low Jaccard (e.g., <0.2) means the boundary is sensitive — interpret with caution.
 
 ### Audit CSVs
 Truncated post text with key features. Designed for blind side-by-side comparison.
 
 ## Methodology summary
 
-1. **Features**: 19 interpretable features spanning surface style (word/sentence length, punctuation, capitalization, lexical diversity), discourse markers (pronouns, hedges, temporal references, anecdote markers, typo proxy), model-based perplexity (Llama 3.2 / GPT-2), and semantic embeddings (nearest-neighbor distance, local density, centroid distance).
+1. **Features**: 19 interpretable features spanning surface style (word/sentence length, punctuation, capitalization, lexical diversity), discourse markers (pronouns, hedges, temporal references, anecdote markers, typo proxy), model-based perplexity (Llama 3.2 / GPT-2), and semantic embeddings (nearest-neighbor distance, log-transformed local density, centroid distance).
 
 2. **Outlier detection**: Three unsupervised methods:
-   - **Isolation Forest** — isolates anomalies via random partitioning
-   - **Local Outlier Factor** — compares local density to neighbors
-   - **Robust Mahalanobis distance** — multivariate distance with contamination-resistant covariance
+   - **Isolation Forest** — isolates anomalies via random partitioning (contamination=0.05)
+   - **Local Outlier Factor** — compares local density to neighbors (contamination="auto"; thresholding is handled by the ensemble)
+   - **Robust Mahalanobis distance** — multivariate distance with contamination-resistant covariance (MinCovDet)
 
-3. **Ensemble rule**: A post is flagged only if 2+ of 3 detectors agree at the chosen percentile threshold. This reduces false positives at the cost of some sensitivity.
+3. **Ensemble rule**: A post is flagged only if 2+ of 3 detectors exceed the 95th percentile of their respective score distributions. This majority-vote rule reduces false positives at the cost of some sensitivity.
+
+4. **Statistical tests**: Chi-squared tests with Cramér's V for category/toxicity associations, bootstrap confidence intervals for the overall flag rate, Cohen's d effect sizes for feature differences, and baseline detector comparison.
 
 ## Troubleshooting
 

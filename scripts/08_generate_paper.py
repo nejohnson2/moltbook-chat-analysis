@@ -414,6 +414,8 @@ def _build_latex(
     word_mean = ds.get("word_mean", "109")
     word_median = ds.get("word_median", "67")
     dup_rate = ds.get("dup_rate", "24.3")
+    tox_level_0_count = ds.get("tox_level_0_count", 0)
+    tox_level_4_count = ds.get("tox_level_4_count", 0)
 
     # Build figure includes for distribution plots
     dist_figures = []
@@ -495,10 +497,12 @@ the Jaccard similarity coefficient.
 
 {sensitivity_table}
 
-A high Jaccard similarity between the 90th and 95th percentile thresholds
-indicates that the core set of atypical posts is robust to moderate changes
-in the decision boundary.  The 99th percentile naturally yields a much
-smaller set, capturing only the most extreme outliers.
+The moderate Jaccard similarity between the 90th and 95th percentile
+thresholds indicates partial overlap: the 95th-percentile flagged set
+is a proper subset of the 90th-percentile set, but tightening the
+threshold removes a substantial fraction of borderline cases.
+The 99th percentile naturally yields a much smaller set, capturing
+only the most extreme outliers.
 """
 
     latex = rf"""\documentclass[11pt,a4paper]{{article}}
@@ -697,9 +701,9 @@ Table~\ref{{tab:toxicity_dist}} shows the distribution by toxicity level.
 
 {toxicity_dist_table}
 
-The vast majority of posts ({_pct(31298 / total_clean)}\%) are classified as
+The vast majority of posts ({_pct(tox_level_0_count / total_clean)}\%) are classified as
 non-toxic (level~0).  Higher toxicity levels are progressively rarer,
-with level~4 (most toxic) comprising only {_pct(628 / total_clean)}\%
+with level~4 (most toxic) comprising only {_pct(tox_level_4_count / total_clean)}\%
 of posts.
 
 \subsection{{Community Structure}}
@@ -1130,12 +1134,6 @@ N.~Reimers and I.~Gurevych.
 
 
 # ---------------------------------------------------------------------------
-# Globals for table-building (set in main)
-# ---------------------------------------------------------------------------
-_category_rows: list[dict] = []
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -1166,8 +1164,7 @@ def main() -> None:
     profile = _load_json(profile_path)
     manifest = _load_json(manifest_path)
 
-    global _category_rows
-    _category_rows = _load_csv_rows(cat_path)
+    category_rows = _load_csv_rows(cat_path)
     tox_rows = _load_csv_rows(tox_path)
     sub_rows = _load_csv_rows(sub_path)
 
@@ -1216,6 +1213,12 @@ def main() -> None:
             "dup_rate": f"{100 * df[text_col].duplicated().sum() / len(df):.1f}",
         }
 
+        # Add toxicity level counts for dynamic inline text
+        if "toxic_level" in df.columns:
+            tox_counts = df["toxic_level"].value_counts().sort_index()
+            desc_stats["tox_level_0_count"] = int(tox_counts.get(0, 0))
+            desc_stats["tox_level_4_count"] = int(tox_counts.get(4, 0))
+
     if features_path.exists():
         logger.info("Computing feature summary statistics...")
         feat_df = pd.read_parquet(features_path)
@@ -1235,10 +1238,10 @@ def main() -> None:
             })
 
     # ── Build tables ─────────────────────────────────────────────────
-    category_table = _build_category_table(_category_rows)
+    category_table = _build_category_table(category_rows)
     toxicity_table = _build_toxicity_table(tox_rows)
     submolt_table = _build_submolt_table(sub_rows, n=10)
-    category_dist_table = _build_category_dist_table(_category_rows)
+    category_dist_table = _build_category_dist_table(category_rows)
     toxicity_dist_table = _build_toxicity_dist_table(tox_rows)
     descriptive_table = _build_dataset_descriptive_table(desc_stats) if desc_stats else ""
     feature_summary_table = _build_feature_summary_table(feat_stats) if feat_stats else ""
