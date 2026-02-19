@@ -1278,19 +1278,15 @@ def main() -> None:
     ensure_dir(out_dir)
     ensure_dir(out_dir / "figures")
 
-    tex_path = out_dir / "moltbook_humanlike.tex"
-    tex_path.write_text(latex)
-    logger.info("Wrote LaTeX to %s", tex_path)
-
-    # Copy figures
+    # Copy figures only — do NOT overwrite the hand-authored .tex file.
     if fig_dir.exists():
         for fig in fig_dir.glob("*.png"):
             dest = out_dir / "figures" / fig.name
             shutil.copy2(fig, dest)
         logger.info("Copied %d figures to %s", len(figure_names), out_dir / "figures")
 
-    write_manifest(out_dir, cfg, {"stage": "paper", "tex_file": str(tex_path)})
-    logger.info("Done. Compile with: cd %s && pdflatex moltbook_humanlike.tex", out_dir)
+    write_manifest(out_dir, cfg, {"stage": "paper"})
+    logger.info("Done. Figures are in %s/figures/. Compile with: cd %s && pdflatex moltbook_humanlike.tex", out_dir, out_dir)
 
 
 if __name__ == "__main__":
