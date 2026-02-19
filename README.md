@@ -171,7 +171,7 @@ outputs/
 ├── sensitivity/
 │   └── sensitivity_report.csv     # Stability across threshold choices
 └── stats/
-    └── statistical_tests.json     # Chi-squared, bootstrap CI, effect sizes
+    └── feature_correlations.csv   # Pairwise feature correlation matrix
 
 paper/                             # Hand-authored research paper (project root)
 ├── moltbook_humanlike.tex         # AIES 2026 LaTeX source (do not overwrite)
@@ -239,6 +239,29 @@ Truncated post text with key features. Designed for blind side-by-side compariso
 | Llama 3.2 access denied | Either run `huggingface-cli login` or let the pipeline fall back to GPT-2 medium |
 | Out of memory on full dataset | Use `sample_mode: true` in config.yaml |
 | Slow perplexity | Use `--skip-perplexity` flag with `03_build_features.py` for faster iteration |
+
+## Known issues and caveats
+
+### Bugs
+
+1. **`09_statistical_tests.py` has no `--config` argument.** All file paths are hardcoded relative to the script location. Every other pipeline script accepts `--config` for consistency. Chi-squared results, bootstrap CI, and Cohen's d are only printed to stdout — no structured JSON output is saved (only `feature_correlations.csv`).
+
+2. **`09_statistical_tests.py` calls `feature_correlations()` twice** — once for printing and once for saving — running the computation redundantly.
+
+3. **`09_statistical_tests.py` dead conditional in `baseline_single_detectors`.** The expression `df[score_col] > threshold if score_col == "mahalanobis_score" else df[score_col] > threshold` evaluates identically in both branches (copy-paste artifact).
+
+4. **Feature caches are not keyed by model name.** Both `perplexity_cache.parquet` and `embeddings_cache.npy` are loaded purely based on file existence. If you change `perplexity_model` or `embedding_model` in `config.yaml`, the old cache is silently reused. **Workaround:** manually delete cache files after changing model config.
+
+5. **Perplexity tokenization silently truncates long texts.** Texts are tokenized with `max_length=4096` tokens (~16,000 characters). Posts exceeding this are truncated with no log warning. Given `max_text_length: 50000` in config, some posts may be affected.
+
+### Methodological caveats
+
+- **Lexical diversity (TTR):** Uses a 200-token window (MATTR approximation), but for posts shorter than 200 tokens this degenerates to standard TTR, which is known to be length-sensitive.
+- **Typo proxy:** Flags any word not in the NLTK English word corpus. This catches slang, proper nouns, and technical terms in addition to actual typos — it is an intentionally rough proxy, not a precision metric.
+- **Mahalanobis distance is computed row-by-row** via `scipy.spatial.distance.mahalanobis`, which is O(n * p^2). For large datasets this is slow; a vectorized implementation would be faster.
+- **`plot_outlier_overlap` hardcodes the 95th-percentile threshold** rather than reading it from config, which could produce a mismatch if the detection threshold is changed.
+- **`requirements.txt` uses `>=` bounds** rather than pinned versions. Actual versions used in each run are captured in `run_manifest.json`, but exact reproducibility requires matching those versions.
+- **No test suite.** There is no `tests/` directory. Validation relies on the data profiling step and manual notebook exploration.
 
 ## Requirements
 
