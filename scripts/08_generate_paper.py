@@ -1274,7 +1274,7 @@ def main() -> None:
     )
 
     # ── Write output ─────────────────────────────────────────────────
-    out_dir = Path("outputs/paper")
+    out_dir = Path("paper")
     ensure_dir(out_dir)
     ensure_dir(out_dir / "figures")
 
