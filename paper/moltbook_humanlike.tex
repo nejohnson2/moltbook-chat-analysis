@@ -425,13 +425,15 @@ the cleaned corpus.
 Variable & Mean & Median & Std & Min & Max & Skew \\
 \midrule
 Text length (chars) & 710.6 & 435 & 1,468.2 & 10 & 112,767 & 35.8 \\
-Word count          & 109.3 & 67  & 189.2   & 1  & 15,753  & 30.0 \\
+Word count$^a$      & 105.3 & 65  & 181.1   & 1  & 15,753  & 30.0 \\
 Upvotes             & 36.2  & 1   & 2,333.2 & 0  & 316,857 & 93.6 \\
 Downvotes           & 0.1   & 0   & 8.5     & 0  & 1,294   & 114.2 \\
 Comment count       & 4.6   & 0   & 104.0   & 0  & 20,138  & 171.4 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\noindent\footnotesize{$^a$Word count from the stylometric feature extractor (NLTK-based tokenization), consistent with the values reported in Table~\ref{tab:features}.}\normalsize
 
 \paragraph{Text length distribution.}
 Post lengths are heavily right-skewed (skewness~$= 35.8$), with a mean
@@ -445,7 +447,8 @@ reflecting the power-law dynamics documented in~\citet{demarzo2026collective}.
 
 \paragraph{Duplicate content.}
 The corpus contains 11,589~duplicate text bodies---distinct post IDs
-sharing identical content---representing 24.3\% of all posts.  We
+sharing identical content---representing 26.1\% of the raw corpus (or
+26.8\% of the 43,234~quality-filtered posts).  We
 retain duplicates to preserve the natural posting distribution, as
 duplicated content (e.g., cross-posted announcements or flooding
 behavior) is itself a meaningful signal of agent behavior.  Indeed,
@@ -641,6 +644,11 @@ of unusual vocabulary, code, foreign language, or atypical syntax---will
 have elevated perplexity.  Our primary reference model is
 \textbf{meta-llama/Llama-3.2-1B}; if unavailable (e.g., due to access
 restrictions), the pipeline falls back to \textbf{gpt2-medium}.
+In this analysis, \textbf{meta-llama/Llama-3.2-1B} was used for all
+43,234~posts, as confirmed by the \texttt{ppl\_model\_used} column
+logged in the features cache.  The two models produce systematically
+different absolute perplexity values; any replication using the
+fallback model should be treated as a separate experimental condition.
 
 For each post, we compute token-level negative log-likelihoods using
 a sliding-window approach (window size 1024~tokens, stride 512) to
@@ -723,8 +731,12 @@ split value.  An anomaly, sitting in a sparse region far from the
 main cluster, requires very few splits to be isolated into a leaf node.
 An inlier, embedded in a dense cluster, requires many more.  The
 anomaly score is derived from the mean path length to isolation,
-so that higher scores indicate greater anomaly.  We use 200~estimators
-and a contamination parameter of 0.05.
+so that higher scores indicate greater anomaly.  We use the scikit-learn
+default of 100~estimators and a contamination parameter of 0.05.
+Note that because we use \texttt{score\_samples()} rather than
+\texttt{predict()}, the contamination parameter does not affect the raw
+anomaly scores; the effective threshold is determined by the ensemble's
+95th-percentile rule described in \S\ref{sec:outliers}.
 
 \subsubsection{Local Outlier Factor (LOF)}
 
@@ -737,8 +749,12 @@ are my neighbors than I am?  A ratio substantially greater than~1
 indicates that the point is in a sparse region surrounded by dense
 neighborhoods---the hallmark of a local outlier.  This detector is
 particularly well-suited to multi-topic corpora, where inlier clusters
-may exist at different density levels.  We set $k=20$ neighbors and
-contamination to 0.05.
+may exist at different density levels.  We set $k=20$ neighbors; we
+use \texttt{contamination="auto"} (the scikit-learn default) rather
+than a fixed rate, because the ensemble's own 95th-percentile threshold
+already determines which posts are flagged, and setting a fixed
+contamination at this stage would redundantly double-threshold the
+LOF scores.
 
 \subsubsection{Robust Mahalanobis Distance}
 
@@ -1079,14 +1095,20 @@ reducing the influence of any single method's idiosyncratic boundary.
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/pca_scatter.png}
-\caption{PCA projection of the 19-dimensional feature space.  Flagged
-         posts (orange) occupy peripheral regions, consistent with
-         their identification as statistical outliers.}
+\caption{PCA projection of the 19-dimensional feature space after
+         standardization.  Flagged posts (orange) occupy peripheral
+         regions, consistent with their identification as statistical
+         outliers.  Features are $z$-scored before PCA to prevent
+         high-variance features (e.g., \texttt{ppl\_tail\_95})
+         from dominating the projection.}
 \label{fig:pca}
 \end{figure}
 
-Figure~\ref{fig:pca} projects the 19-dimensional feature space onto
-its first two principal components.  Flagged posts (orange) are
+Figure~\ref{fig:pca} projects the standardized 19-dimensional feature
+space onto its first two principal components.  Features are
+$z$-scored prior to PCA so that high-variance features such as
+\texttt{ppl\_tail\_95} (std~$\approx 3.9\times10^5$) do not
+trivially dominate the projection.  Flagged posts (orange) are
 concentrated in the periphery of the point cloud, consistent with
 their identification as statistical outliers.  The dense central
 cluster of unflagged posts is visually striking: the vast majority of
@@ -1118,15 +1140,21 @@ Threshold (\%) & Flagged & Flag Rate (\%) & Overlap & Jaccard \\
 \end{tabular}
 \end{table}
 
-The moderate Jaccard similarity (0.554) between the 90th and 95th
-percentile thresholds indicates that the 95th-percentile flagged set
-is a proper subset of the 90th-percentile set, with a substantial
-fraction of borderline cases removed by the tighter threshold.  The
-99th percentile captures only the most extreme outliers.  The
-qualitative patterns reported in the category- and community-level
-analyses are stable across all three thresholds, providing confidence
-that the substantive findings are not artifacts of the specific
-threshold chosen.
+The Jaccard similarity of 0.554 between the 90th and 95th percentile
+thresholds confirms that the 95th-percentile flagged set is a complete
+subset of the 90th-percentile set (all 1,768 flags at 95th are also
+flagged at 90th); the lower Jaccard reflects the 90th-set's additional
+1,424 borderline posts that the tighter threshold removes.  The drop
+to Jaccard~0.152 between the 95th and 99th percentile thresholds is
+more striking: over 85\% of the 95th-percentile flags disappear at the
+99th-percentile.  This threshold sensitivity means that claims about
+specific flagged posts should be treated as relative to the chosen
+threshold rather than as absolute atypicality labels.  Nonetheless,
+the qualitative patterns at the category and community level---the
+concentration of atypicality in spam, economics, and non-English
+communities---are preserved across all three thresholds, providing
+confidence that the substantive findings are not artifacts of the
+specific threshold chosen.
 
 
 % ══════════════════════════════════════════════════════════════════════
@@ -1293,6 +1321,15 @@ these volumes will be inadequate for real-world governance.
           the Moltbook corpus may include a small number of
           human-authored posts that we are unable to identify and
           exclude.
+    \item \textbf{Embedding feature redundancy.}
+          \texttt{emb\_local\_density} is defined as the reciprocal of
+          \texttt{emb\_mean\_nn\_dist}, making them mathematically
+          dependent (Pearson $r = -0.856$).  Including both in the
+          19-feature input modestly over-weights the embedding-geometry
+          dimension in detectors that are sensitive to feature
+          correlations (particularly Mahalanobis distance).  Future
+          work should replace one with an independent geometric feature
+          such as $k$-nearest-neighbor reachability distance.
 \end{itemize}
 
 

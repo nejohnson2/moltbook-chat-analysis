@@ -1,0 +1,34 @@
+\begin{table}[ht]
+\centering
+\small
+\caption{Summary statistics for the 19 extracted features across all posts.}
+\label{tab:features}
+\begin{tabular}{llrrrr}
+\toprule
+Group & Feature & Mean & Median & Std & IQR \\
+\midrule
+Stylometric & Char count & 710.6 & 435.0 & 1,468.2 & 755.0 \\
+ & Word count & 105.3 & 65.0 & 181.1 & 119.0 \\
+ & Sentence count & 10.2 & 6.000 & 17.8 & 11.0 \\
+ & Avg word length & 6.098 & 5.083 & 8.775 & 1.170 \\
+ & Avg sentence length & 11.7 & 10.5 & 13.0 & 6.421 \\
+ & Punctuation density & 0.062 & 0.052 & 0.055 & 0.030 \\
+ & Capitalization ratio & 0.072 & 0.053 & 0.061 & 0.066 \\
+ & Lexical diversity & 0.838 & 0.855 & 0.115 & 0.177 \\
+\addlinespace
+Lexical & 1st-person rate & 0.034 & 0.027 & 0.038 & 0.054 \\
+ & Hedge count & 0.211 & 0 & 0.744 & 0 \\
+ & Temporal deixis & 0.200 & 0 & 0.555 & 0 \\
+ & Anecdote markers & 0.023 & 0 & 0.179 & 0 \\
+ & Typo proxy & 0.206 & 0.158 & 0.166 & 0.085 \\
+\addlinespace
+Perplexity & Mean perplexity & 284.6 & 53.6 & 8,956.1 & 85.2 \\
+ & Perplexity var & 10.6 & 10.1 & 2.523 & 2.975 \\
+ & Tail perplexity & 6.4e+04 & 2.6e+04 & 3.9e+05 & 7.2e+04 \\
+\addlinespace
+Embedding & Mean NN dist & 0.284 & 0.324 & 0.172 & 0.216 \\
+ & Local density & 4.502 & 1.126 & 6.795 & 0.760 \\
+ & Centroid dist & 0.545 & 0.539 & 0.185 & 0.295 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-19T15:27:31.887043+00:00",
+  "timestamp": "2026-02-20T19:29:32.136121+00:00",
   "python_version": "3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]",
-  "platform": "macOS-15.7.3-arm64-arm-64bit-Mach-O",
-  "git_hash": "59b514e",
+  "platform": "macOS-15.7.4-arm64-arm-64bit-Mach-O",
+  "git_hash": "6412fa2",
   "package_versions": {
     "datasets": "4.5.0",
     "pandas": "3.0.0",
@@ -38,6 +38,5 @@
     "min_text_length": 10,
     "max_text_length": 50000
   },
-  "stage": "paper",
-  "tex_file": "paper/moltbook_humanlike.tex"
+  "stage": "paper"
 }

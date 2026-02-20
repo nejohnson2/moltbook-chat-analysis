@@ -28,6 +28,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger("moltbook")
 
@@ -174,8 +175,13 @@ def plot_pca_scatter(
         logger.warning("Fewer than 2 numeric features; skipping PCA plot")
         return
 
+    # Standardize before PCA so high-variance features (e.g. ppl_tail_95)
+    # do not trivially dominate the first principal component.
+    scaler = StandardScaler()
+    numeric_scaled = scaler.fit_transform(numeric)
+
     pca = PCA(n_components=2, random_state=42)
-    coords = pca.fit_transform(numeric)
+    coords = pca.fit_transform(numeric_scaled)
 
     fig, ax = plt.subplots()
     for flag_val, label, color, alpha in [

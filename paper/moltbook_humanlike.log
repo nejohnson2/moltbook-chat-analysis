@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  19 FEB 2026 08:43
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  20 FEB 2026 14:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -512,64 +512,67 @@ n/10.95 TrustAIRLab/Moltbook\T1/cmr/m/n/10.95 ).
 [12]
 
 [13]
-Overfull \hbox (3.59793pt too wide) in paragraph at lines 979--994
+Overfull \hbox (3.59793pt too wide) in paragraph at lines 995--1010
 []\T1/cmr/m/n/10.95 The community-level re-sults are par-tic-u-larly in-for-ma-
 tive. The ``con-tracts'' com-mu-nity (96.77%
  []
 
-<figures/dist_word_count.png, id=444, 722.7pt x 433.62pt>
-File: figures/dist_word_count.png Graphic file (type png)
-<use figures/dist_word_count.png>
-Package pdftex.def Info: figures/dist_word_count.png  used on input line 1010.
-(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
-<figures/dist_avg_sentence_length.png, id=446, 722.7pt x 433.62pt>
-File: figures/dist_avg_sentence_length.png Graphic file (type png)
-<use figures/dist_avg_sentence_length.png>
-Package pdftex.def Info: figures/dist_avg_sentence_length.png  used on input li
-ne 1016.
-(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
-<figures/dist_lexical_diversity.png, id=447, 722.7pt x 433.62pt>
-File: figures/dist_lexical_diversity.png Graphic file (type png)
-<use figures/dist_lexical_diversity.png>
-Package pdftex.def Info: figures/dist_lexical_diversity.png  used on input line
- 1023.
-(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
-<figures/dist_ppl_mean.png, id=448, 722.7pt x 433.62pt>
-File: figures/dist_ppl_mean.png Graphic file (type png)
-<use figures/dist_ppl_mean.png>
-Package pdftex.def Info: figures/dist_ppl_mean.png  used on input line 1029.
-(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
-<figures/dist_first_person_rate.png, id=449, 722.7pt x 433.62pt>
-File: figures/dist_first_person_rate.png Graphic file (type png)
-<use figures/dist_first_person_rate.png>
-Package pdftex.def Info: figures/dist_first_person_rate.png  used on input line
- 1036.
-(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
-<figures/dist_emb_centroid_dist.png, id=450, 722.7pt x 433.62pt>
-File: figures/dist_emb_centroid_dist.png Graphic file (type png)
-<use figures/dist_emb_centroid_dist.png>
-Package pdftex.def Info: figures/dist_emb_centroid_dist.png  used on input line
- 1042.
-(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
-<figures/detector_agreement.png, id=451, 722.7pt x 433.62pt>
-File: figures/detector_agreement.png Graphic file (type png)
-<use figures/detector_agreement.png>
-Package pdftex.def Info: figures/detector_agreement.png  used on input line 106
-3.
-(pdftex.def)             Requested size: 317.07614pt x 190.24422pt.
 
 
 [14]
-<figures/pca_scatter.png, id=459, 722.7pt x 433.62pt>
+<figures/dist_word_count.png, id=454, 722.7pt x 433.62pt>
+File: figures/dist_word_count.png Graphic file (type png)
+<use figures/dist_word_count.png>
+Package pdftex.def Info: figures/dist_word_count.png  used on input line 1026.
+(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
+<figures/dist_avg_sentence_length.png, id=456, 722.7pt x 433.62pt>
+File: figures/dist_avg_sentence_length.png Graphic file (type png)
+<use figures/dist_avg_sentence_length.png>
+Package pdftex.def Info: figures/dist_avg_sentence_length.png  used on input li
+ne 1032.
+(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
+<figures/dist_lexical_diversity.png, id=457, 722.7pt x 433.62pt>
+File: figures/dist_lexical_diversity.png Graphic file (type png)
+<use figures/dist_lexical_diversity.png>
+Package pdftex.def Info: figures/dist_lexical_diversity.png  used on input line
+ 1039.
+(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
+<figures/dist_ppl_mean.png, id=458, 722.7pt x 433.62pt>
+File: figures/dist_ppl_mean.png Graphic file (type png)
+<use figures/dist_ppl_mean.png>
+Package pdftex.def Info: figures/dist_ppl_mean.png  used on input line 1045.
+(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
+<figures/dist_first_person_rate.png, id=459, 722.7pt x 433.62pt>
+File: figures/dist_first_person_rate.png Graphic file (type png)
+<use figures/dist_first_person_rate.png>
+Package pdftex.def Info: figures/dist_first_person_rate.png  used on input line
+ 1052.
+(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
+<figures/dist_emb_centroid_dist.png, id=460, 722.7pt x 433.62pt>
+File: figures/dist_emb_centroid_dist.png Graphic file (type png)
+<use figures/dist_emb_centroid_dist.png>
+Package pdftex.def Info: figures/dist_emb_centroid_dist.png  used on input line
+ 1058.
+(pdftex.def)             Requested size: 217.42265pt x 130.45091pt.
+
+
+[15 <./figures/dist_word_count.png> <./figures/dist_avg_sentence_length.png> <.
+/figures/dist_lexical_diversity.png> <./figures/dist_ppl_mean.png> <./figures/d
+ist_first_person_rate.png> <./figures/dist_emb_centroid_dist.png>]
+<figures/detector_agreement.png, id=472, 722.7pt x 433.62pt>
+File: figures/detector_agreement.png Graphic file (type png)
+<use figures/detector_agreement.png>
+Package pdftex.def Info: figures/detector_agreement.png  used on input line 107
+9.
+(pdftex.def)             Requested size: 317.07614pt x 190.24422pt.
+<figures/pca_scatter.png, id=474, 722.7pt x 433.62pt>
 File: figures/pca_scatter.png Graphic file (type png)
 <use figures/pca_scatter.png>
-Package pdftex.def Info: figures/pca_scatter.png  used on input line 1081.
+Package pdftex.def Info: figures/pca_scatter.png  used on input line 1097.
 (pdftex.def)             Requested size: 317.07614pt x 190.24422pt.
 
 
-[15]
-
-[16]
+[16 <./figures/detector_agreement.png> <./figures/pca_scatter.png>]
 
 [17]
 
@@ -579,50 +582,46 @@ Package pdftex.def Info: figures/pca_scatter.png  used on input line 1081.
 
 [20]
 
-[21 <./figures/dist_word_count.png> <./figures/dist_avg_sentence_length.png> <.
-/figures/dist_lexical_diversity.png> <./figures/dist_ppl_mean.png> <./figures/d
-ist_first_person_rate.png> <./figures/dist_emb_centroid_dist.png>]
+[21]
 
-[22 <./figures/detector_agreement.png> <./figures/pca_scatter.png>]
-(./moltbook_humanlike.aux)
+[22] (./moltbook_humanlike.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `moltbook_humanlike.out' has not changed.
 (rerunfilecheck)             Checksum: 219CFE3DFC342D167E0693AE9227A1C7;8503.
  ) 
 Here is how much of TeX's memory you used:
- 13073 strings out of 473190
- 204718 string characters out of 5715801
- 618165 words of memory out of 5000000
- 36045 multiletter control sequences out of 15000+600000
- 577231 words of font info for 83 fonts, out of 8000000 for 9000
+ 13085 strings out of 473190
+ 204834 string characters out of 5715801
+ 614311 words of memory out of 5000000
+ 36052 multiletter control sequences out of 15000+600000
+ 579541 words of font info for 90 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,421b,607s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,486b,603s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
-></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><
-/usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></us
-r/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr
-/local/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/l
-ocal/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/loc
-al/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local
-/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/t
-exlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/tex
-live/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/local/texli
-ve/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive
-/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2
-025/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/local/texlive/202
-5/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb></usr/local/texlive/2025/
-texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb>
-Output written on moltbook_humanlike.pdf (22 pages, 647581 bytes).
+></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb><
+/usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></u
+sr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr
+/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/lo
+cal/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/loc
+al/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local
+/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/local/t
+exlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/tex
+live/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texli
+ve/2025/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/local/texlive
+/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2
+025/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/local/texlive/202
+5/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2025/
+texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2025/te
+xmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/local/texlive/2025/texm
+f-dist/fonts/type1/public/cm-super/sfti1095.pfb></usr/local/texlive/2025/texmf-
+dist/fonts/type1/public/cm-super/sftt1095.pfb>
+Output written on moltbook_humanlike.pdf (22 pages, 709027 bytes).
 PDF statistics:
- 619 PDF objects out of 1000 (max. 8388607)
- 540 compressed objects within 6 object streams
+ 636 PDF objects out of 1000 (max. 8388607)
+ 551 compressed objects within 6 object streams
  127 named destinations out of 1000 (max. 500000)
  417 words of extra memory for PDF output out of 10000 (max. 10000000)
 

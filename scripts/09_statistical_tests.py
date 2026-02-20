@@ -164,15 +164,11 @@ def main():
     ]:
         if score_col in df.columns:
             threshold = df[score_col].quantile(0.95)
-            df[flag_col] = df[score_col] > threshold if score_col == "mahalanobis_score" else df[score_col] > threshold
-            # For ISO forest, higher score = more anomalous
-            # For LOF, higher score = more anomalous
-            # For Mahalanobis, higher = more anomalous
+            df[flag_col] = df[score_col] > threshold
 
     chi_squared_category(df)
     chi_squared_toxicity(df)
     bootstrap_ci(df["ensemble_flag"])
-    feature_correlations(df, feature_cols)
     baseline_single_detectors(df)
     pca_explained_variance(df, feature_cols)
     effect_size_flagged_vs_unflagged(df, feature_cols)
