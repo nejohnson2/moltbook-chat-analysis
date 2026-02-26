@@ -1115,7 +1115,7 @@ features for flagged versus unflagged posts.
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
   \includegraphics[width=\textwidth]{figures/dist_avg_sentence_length.png}
-  \caption{Average sentence length}
+  \caption{Average sentence length (log scale)}
 \end{subfigure}
 
 \vspace{0.5em}
@@ -1128,7 +1128,7 @@ features for flagged versus unflagged posts.
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
   \includegraphics[width=\textwidth]{figures/dist_ppl_mean.png}
-  \caption{Mean perplexity}
+  \caption{Mean perplexity (log scale)}
 \end{subfigure}
 
 \vspace{0.5em}
@@ -1144,9 +1144,17 @@ features for flagged versus unflagged posts.
   \caption{Embedding centroid distance}
 \end{subfigure}
 \caption{Feature distributions for flagged (orange) versus unflagged
-         (blue) posts.  Flagged posts tend toward the tails of each
-         distribution, confirming that the ensemble detector captures
-         multidimensional atypicality.}
+         (blue) posts.  Mean perplexity and average sentence length are
+         plotted on a log scale ($\log(1+x)$) owing to heavy right-skew
+         (outliers reaching $\sim$$10^6$ and $\sim$$1{,}500$~words,
+         respectively).  Lexical diversity and first-person pronoun rate
+         are y-axis capped (at densities 5 and 15) to reveal the bulk
+         distributions; both features have a boundary mass point
+         (TTR~$=1.0$ for short/non-English posts; rate~$=0$ for posts
+         with no first-person pronouns) whose full height exceeds the
+         cap.  Flagged posts tend toward the tails of each distribution,
+         confirming that the ensemble detector captures multidimensional
+         atypicality.}
 \label{fig:distributions}
 \end{figure}
 

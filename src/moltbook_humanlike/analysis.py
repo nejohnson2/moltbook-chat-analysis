@@ -93,7 +93,11 @@ def plot_feature_distributions(
     output_dir: str | Path,
     features: list[str] | None = None,
 ) -> None:
-    """Histograms of key features, split by flagged vs unflagged."""
+    """Histograms of key features, split by flagged vs unflagged.
+
+    Features with heavy right-skew (perplexity columns, word count) are
+    plotted on a log scale so the bulk of the distribution is visible.
+    """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -105,15 +109,37 @@ def plot_feature_distributions(
         ]
     available = [f for f in features if f in df.columns]
 
+    # Features that are heavily right-skewed and benefit from log scaling.
+    # We use log1p so zeros are handled gracefully.
+    log_scale_features = {
+        "ppl_mean", "ppl_var", "ppl_tail_95",
+        "word_count", "char_count",
+        "avg_sentence_length",  # right tail extends to >1,000 words/sentence
+    }
+
+    # Features with a boundary mass point (spike at 0 or 1) that dominates the
+    # y-axis and obscures the bulk distribution.  Cap the y-axis so the
+    # continuous portion is legible; the spike is noted in the figure caption.
+    ylim_caps: dict[str, float] = {
+        "lexical_diversity": 5.0,     # TTR=1.0 spike (all-unique-word posts)
+        "first_person_rate": 15.0,    # rate=0 spike (posts with no 1st-person pronouns)
+    }
+
     for feat in available:
+        use_log = feat in log_scale_features
         fig, ax = plt.subplots()
         for flag_val, label, color in [(False, "Unflagged", "#4c72b0"), (True, "Flagged", "#dd8452")]:
             subset = df.loc[df["ensemble_flag"] == flag_val, feat].dropna()
             if len(subset) > 0:
-                ax.hist(subset, bins=50, alpha=0.6, label=label, color=color, density=True)
-        ax.set_xlabel(feat)
+                values = np.log1p(subset) if use_log else subset
+                ax.hist(values, bins=50, alpha=0.6, label=label, color=color, density=True)
+        if feat in ylim_caps:
+            ax.set_ylim(0, ylim_caps[feat])
+        xlabel = f"log(1 + {feat})" if use_log else feat
+        ax.set_xlabel(xlabel)
         ax.set_ylabel("Density")
-        ax.set_title(f"Distribution of {feat}")
+        title = f"Distribution of {feat}" + (" (log scale)" if use_log else "")
+        ax.set_title(title)
         ax.legend()
         fig.tight_layout()
         fig.savefig(output_dir / f"dist_{feat}.png", dpi=150)
