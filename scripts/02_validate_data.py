@@ -35,7 +35,7 @@ from moltbook_humanlike.io_utils import (
     write_manifest,
 )
 from moltbook_humanlike.utils import setup_logging
-from moltbook_humanlike.validate import build_profile
+from moltbook_humanlike.validate import add_duplicate_flags, build_profile
 
 
 def flatten_post_column(df: pd.DataFrame) -> pd.DataFrame:
@@ -117,12 +117,39 @@ def main() -> None:
         df = df.reset_index(drop=True)
         logger.info("Cleaned: %d -> %d rows (dropped %d)", before, len(df), before - len(df))
 
+    # Flag exact-text duplicates (adds is_exact_duplicate, duplicate_count,
+    # duplicate_group_id columns so downstream steps and the interactive
+    # explorer can filter or highlight repeated posts)
+    df = add_duplicate_flags(df, text_col)
+    n_dup = int(df["is_exact_duplicate"].sum()) if "is_exact_duplicate" in df.columns else 0
+    profile["duplicate_posts"] = n_dup
+    logger.info("Exact-duplicate posts (all copies): %d", n_dup)
+
     proc_path = Path("data/processed/posts_clean.parquet")
     ensure_dir(proc_path.parent)
     save_parquet(df, proc_path)
-    logger.info("Saved cleaned data to %s", proc_path)
+    logger.info("Saved cleaned data (all rows) to %s", proc_path)
 
-    write_manifest(out_dir, cfg, {"stage": "validate", "rows_after_clean": len(df)})
+    # Deduplicated version: one row per unique text, keeping the first
+    # occurrence.  Feature extraction, outlier detection, and analysis all
+    # operate on this file so duplicate posts cannot distort density-based
+    # detectors (LOF, Mahalanobis) or inflate summary counts.
+    deduped = df.drop_duplicates(subset=[text_col], keep="first").reset_index(drop=True)
+    deduped_path = Path("data/processed/posts_deduped.parquet")
+    save_parquet(deduped, deduped_path)
+    logger.info(
+        "Saved deduplicated data to %s  (%d -> %d rows, %d duplicates removed)",
+        deduped_path, len(df), len(deduped), len(df) - len(deduped),
+    )
+    profile["rows_after_dedup"] = len(deduped)
+    profile["rows_removed_dedup"] = len(df) - len(deduped)
+
+    write_manifest(out_dir, cfg, {
+        "stage": "validate",
+        "rows_after_clean": len(df),
+        "rows_after_dedup": len(deduped),
+        "rows_removed_dedup": len(df) - len(deduped),
+    })
     logger.info("Done.")
 
 

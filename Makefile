@@ -29,7 +29,7 @@ outputs/validate/data_profile.json: data/raw/posts.parquet
 	$(PYTHON) scripts/02_validate_data.py --config $(CONFIG)
 
 features: validate outputs/features/features.parquet ## Stage 3: Extract linguistic features
-outputs/features/features.parquet: data/processed/posts_clean.parquet
+outputs/features/features.parquet: data/processed/posts_deduped.parquet
 	$(PYTHON) scripts/03_build_features.py --config $(CONFIG)
 
 outliers: features outputs/outliers/outliers.parquet ## Stage 4: Run ensemble outlier detection

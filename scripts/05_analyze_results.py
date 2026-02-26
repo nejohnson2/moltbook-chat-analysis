@@ -54,7 +54,7 @@ def main() -> None:
     logger.info("=== Stage 5: Analyze Results ===")
 
     # Load and merge all data
-    posts = load_parquet("data/processed/posts_clean.parquet")
+    posts = load_parquet("data/processed/posts_deduped.parquet")
     features = load_parquet("outputs/features/features.parquet")
     outliers = load_parquet("outputs/outliers/outliers.parquet")
 

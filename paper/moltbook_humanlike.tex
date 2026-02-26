@@ -44,14 +44,19 @@ spanning stylometry, lexical discourse markers, language-model perplexity,
 and sentence-embedding geometry, then applies an ensemble of three
 unsupervised anomaly detectors---Isolation Forest, Local Outlier Factor,
 and Robust Mahalanobis Distance---requiring agreement from at least two
-methods before flagging a post.  Applied to 43,234 quality-filtered posts,
-the ensemble identifies 1,768~(4.09\%) as linguistically atypical.  The
-vast majority of posts, across topic categories including socialization,
-technology, viewpoint, and promotion, exhibit strikingly uniform
-linguistic profiles, providing empirical evidence of corpus-wide
-homogenization.  Atypicality is sharply concentrated in spam
-(Category~H, 34.6\% flagged), economics (Category~D, 17.2\%), and in
-communities hosting non-English text and highly specialized discourse.
+methods before flagging a post.  Applied to 43,234 quality-filtered posts, then deduplicated to
+32,709 unique-text posts, the ensemble identifies 1,236~(3.78\%) as
+linguistically atypical.  The vast majority of posts, across topic
+categories including socialization, technology, viewpoint, and promotion,
+exhibit strikingly uniform linguistic profiles, providing empirical
+evidence of corpus-wide homogenization.  Atypicality is sharply
+concentrated in spam (Category~H, 34.7\% flagged) and miscellaneous
+content (Category~I, 14.6\%); the Economics category~(D) shows
+moderately elevated atypicality at 6.0\%---substantially lower than
+a na\"{i}ve analysis suggests, with the gap attributable to the removal
+of 10,525 duplicate contract and transaction posts that distort
+density-based detectors.  Genuine linguistic diversity is concentrated
+in non-English and specialized communities.
 We argue that this uneven distribution is itself informative: genuine
 linguistic diversity in autonomous agent populations is rare,
 domain-specific, and partially coincident with manipulative or anomalous
@@ -119,9 +124,11 @@ population itself.
           population rather than of individual posts, operationalized
           through a 19-feature, three-detector ensemble pipeline.
     \item An \textbf{empirical characterization} of linguistic diversity
-          in 43,234 Moltbook posts, demonstrating pervasive homogenization
-          in mainstream topic categories and sharp concentration of
-          atypicality in spam, economics, and non-English communities.
+          in 32,709 deduplicated Moltbook posts, demonstrating pervasive
+          homogenization in mainstream topic categories and sharp
+          concentration of atypicality in spam and non-English communities,
+          with the role of economics substantially revised downward after
+          deduplication.
     \item A \textbf{discussion of governance implications}, including what
           audit methodologies of this kind can and cannot tell us about
           the behavior of multi-agent social systems.
@@ -407,8 +414,13 @@ We apply three quality filters during validation:
           these are retained but truncated during feature extraction.
 \end{itemize}
 
-After cleaning, we retain \textbf{43,234~posts} for analysis
-(97.43\% of the raw corpus).
+After quality filtering, we retain \textbf{43,234~posts}
+(97.43\% of the raw corpus).  Before feature extraction and outlier
+detection, we additionally remove exact-duplicate text bodies, keeping
+the first occurrence of each unique post body.  This removes
+10,525~duplicate instances and yields a final analysis corpus of
+\textbf{32,709~deduplicated posts}~(73.72\% of the raw corpus).
+Section~\ref{sec:preprocess} details the motivation for this step.
 
 \subsection{Descriptive Statistics}
 
@@ -417,18 +429,18 @@ the cleaned corpus.
 
 \begin{table}[ht]
 \centering
-\caption{Descriptive statistics of the cleaned Moltbook corpus
-         ($N = 43,234$).}
+\caption{Descriptive statistics of the deduplicated Moltbook analysis
+         corpus ($N = 32,709$).}
 \label{tab:descriptive}
 \begin{tabular}{lrrrrrr}
 \toprule
 Variable & Mean & Median & Std & Min & Max & Skew \\
 \midrule
-Text length (chars) & 710.6 & 435 & 1,468.2 & 10 & 112,767 & 35.8 \\
-Word count$^a$      & 105.3 & 65  & 181.1   & 1  & 15,753  & 30.0 \\
-Upvotes             & 36.2  & 1   & 2,333.2 & 0  & 316,857 & 93.6 \\
-Downvotes           & 0.1   & 0   & 8.5     & 0  & 1,294   & 114.2 \\
-Comment count       & 4.6   & 0   & 104.0   & 0  & 20,138  & 171.4 \\
+Text length (chars) & 858.4 & 602 & 1,608.8 & 10 & 112,767 & 35.5 \\
+Word count$^a$      & 127.4 & 92  & 194.8   & 0  & 14,951  & 30.7 \\
+Upvotes             & 46.8  & 2   & 2,678.3 & 0  & 316,857 & 81.7 \\
+Downvotes           & 0.2   & 0   & 9.7     & 0  & 1,294   & 100.2 \\
+Comment count       & 5.9   & 1   & 119.2   & 0  & 20,138  & 150.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -436,96 +448,114 @@ Comment count       & 4.6   & 0   & 104.0   & 0  & 20,138  & 171.4 \\
 \noindent\footnotesize{$^a$Word count from the stylometric feature extractor (NLTK-based tokenization), consistent with the values reported in Table~\ref{tab:features}.}\normalsize
 
 \paragraph{Text length distribution.}
-Post lengths are heavily right-skewed (skewness~$= 35.8$), with a mean
-of 710.6~characters but a median of only 435.  The interquartile range
-spans 163 to 918~characters, while the 95th percentile reaches
-2,114~characters.  This right-skew is consistent with typical
-social-media corpora, where brief reactions coexist with long-form
-essays.  The engagement statistics are similarly skewed: the median
-post receives only one upvote, while the maximum exceeds 316,000,
-reflecting the power-law dynamics documented in~\citet{demarzo2026collective}.
+Post lengths are heavily right-skewed (skewness~$= 35.5$), with a mean
+of 858.4~characters but a median of only 602.  The interquartile range
+spans 298 to 1,069~characters, while the 95th percentile reaches
+2,305~characters.  The deduplicated corpus is noticeably longer on
+average than the full quality-filtered corpus (mean 858 vs.\ 710~chars),
+because the removed duplicates were disproportionately short, repetitive
+posts.  This right-skew is consistent with typical social-media corpora,
+where brief reactions coexist with long-form essays.  The engagement
+statistics are similarly skewed: the median post receives only two
+upvotes, while the maximum exceeds 316,000, reflecting the power-law
+dynamics documented in~\citet{demarzo2026collective}.
 
 \paragraph{Duplicate content.}
-The corpus contains 11,589~duplicate text bodies---distinct post IDs
-sharing identical content---representing 26.1\% of the raw corpus (or
-26.8\% of the 43,234~quality-filtered posts).  We
-retain duplicates to preserve the natural posting distribution, as
-duplicated content (e.g., cross-posted announcements or flooding
-behavior) is itself a meaningful signal of agent behavior.  Indeed,
-the presence of near-identical posts at sub-minute intervals was
-documented as a characteristic pathology of the platform by
-\citet{jiang2026moltbook}, and our analysis of the Spam category
-(H) confirms that such content produces anomalous linguistic signatures.
+The corpus contains 11,589~posts sharing their text body with at least
+one other post---representing 26.1\% of the raw corpus (26.8\% of the
+43,234 quality-filtered posts).  These duplicates are not uniformly
+distributed: toxicity level~2 posts are 86.7\% duplicate (4,015 of
+4,632), Viewpoint~(E) loses 38.8\% of its posts to deduplication,
+and Socializing~(C) loses 32.0\%.  The duplicate-status flags
+($\texttt{is\_exact\_duplicate}$, $\texttt{duplicate\_count}$,
+$\texttt{duplicate\_group\_id}$) are retained in the full
+quality-filtered corpus (\texttt{posts\_clean.parquet}) for exploratory
+analysis, as bursty flooding behavior is itself a meaningful behavioral
+signal~\citep{jiang2026moltbook}.  However, for feature extraction and
+outlier detection we work exclusively with the 32,709~unique-text posts:
+density-based detectors (LOF, Mahalanobis) are directly biased by
+identical feature vectors, which artificially inflate local-density
+estimates and pull scores toward ``typical.''  The 10,525~removed posts
+span 1,064~unique duplicate groups, each retained as a single
+representative instance.
 
 \subsection{Category Distribution}
 
 Table~\ref{tab:category_dist} shows the distribution of posts across
-the nine topic categories.  Category~C (Socializing) dominates the
-corpus with nearly one-third of all posts, reflecting that casual
-greeting and networking emerged as the default mode of agent interaction.
-Categories~G (Politics) and~I (Others) are rare, comprising fewer
-than 900~posts combined.  This imbalance is important context for
-interpreting outlier rates, as small categories yield less stable
-estimates.
+the nine topic categories in the deduplicated analysis corpus.
+Category~C (Socializing) still dominates at 29.6\% (down from 32.9\%
+before deduplication), reflecting that casual greeting and networking
+was both the default mode of agent interaction and a heavily duplicated
+activity.  Categories~G (Politics) and~I (Others) remain rare,
+comprising fewer than 700~posts combined.  This imbalance is important
+context for interpreting outlier rates, as small categories yield less
+stable estimates.
 
 \begin{table}[ht]
 \centering
-\caption{Distribution of posts across the nine topic categories.
-         Socializing (C) dominates with nearly one-third of all posts.}
+\caption{Distribution of posts across the nine topic categories in the
+         deduplicated analysis corpus ($N = 32,709$).  Socializing~(C)
+         still dominates but at a lower share than the pre-deduplication
+         corpus, reflecting the heavy concentration of duplicate content
+         in categories C and E.}
 \label{tab:category_dist}
 \begin{tabular}{clrc}
 \toprule
 Category & Name & Posts & Share (\%) \\
 \midrule
-A & Identity    & 4,865  & 11.25 \\
-B & Technology  & 5,165  & 11.95 \\
-C & Socializing & 14,247 & 32.95 \\
-D & Economics   & 3,957  &  9.15 \\
-E & Viewpoint   & 8,935  & 20.67 \\
-F & Promotion   & 4,307  &  9.96 \\
-G & Politics    &   609  &  1.41 \\
-H & Spam        &   896  &  2.07 \\
-I & Others      &   253  &  0.59 \\
+A & Identity    & 4,543  & 13.89 \\
+B & Technology  & 4,838  & 14.79 \\
+C & Socializing & 9,685  & 29.61 \\
+D & Economics   & 2,856  &  8.73 \\
+E & Viewpoint   & 5,470  & 16.72 \\
+F & Promotion   & 3,898  & 11.92 \\
+G & Politics    &   465  &  1.42 \\
+H & Spam        &   721  &  2.20 \\
+I & Others      &   233  &  0.71 \\
 \midrule
-Total &          & 43,234 & 100.00 \\
+Total &          & 32,709 & 100.00 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Toxicity Distribution}
 
-Table~\ref{tab:toxicity_dist} shows the distribution by toxicity level,
-using the five-level scale defined by~\citet{jiang2026moltbook}.
-The vast majority of posts (72.39\%) are classified as safe (level~0).
-Higher toxicity levels are progressively rarer, with level~4
-(malicious intent) comprising only 1.45\% of posts.
+Table~\ref{tab:toxicity_dist} shows the distribution by toxicity level
+in the deduplicated corpus, using the five-level scale defined
+by~\citet{jiang2026moltbook}.  The vast majority of posts (84.96\%)
+are classified as safe (level~0).  The deduplicated corpus is markedly
+safer than the pre-deduplication corpus (72.39\% safe), because
+levels~2 and~3 were the most heavily duplicated: 86.7\% of
+toxicity-level-2 posts and 59.9\% of level-3 posts were duplicate
+instances.
 
 \begin{table}[ht]
 \centering
-\caption{Distribution of posts by toxicity level.  The corpus is
-         predominantly safe (level~0), with decreasing counts at
-         higher toxicity levels.}
+\caption{Distribution of posts by toxicity level in the deduplicated
+         analysis corpus ($N = 32,709$).  The corpus is overwhelmingly
+         safe (level~0); toxic and manipulative content (levels~2--3)
+         was disproportionately concentrated in duplicate post floods.}
 \label{tab:toxicity_dist}
 \begin{tabular}{llrc}
 \toprule
 Level & Label        & Posts  & Share (\%) \\
 \midrule
-0 & Safe           & 31,298 & 72.39 \\
-1 & Edgy           & 3,707  &  8.57 \\
-2 & Toxic          & 4,632  & 10.71 \\
-3 & Manipulative   & 2,969  &  6.87 \\
-4 & Malicious      &   628  &  1.45 \\
+0 & Safe           & 27,791 & 84.96 \\
+1 & Edgy           & 2,596  &  7.94 \\
+2 & Toxic          &   617  &  1.89 \\
+3 & Manipulative   & 1,189  &  3.64 \\
+4 & Malicious      &   516  &  1.58 \\
 \midrule
-Total &             & 43,234 & 100.00 \\
+Total &             & 32,709 & 100.00 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Community Structure}
 
-The 1,478~communities vary enormously in size.  The largest community
-(``general'') contains 31,984~posts, while the median community has
-only 2~posts.  This extreme skew means that a handful of large
+The deduplicated corpus spans 1,466~communities.  The largest community
+(``general'') contains 22,182~posts, while the median community has
+only 1~post.  This extreme skew means that a handful of large
 communities dominate the corpus while most communities are small and
 specialized---a pattern consistent with the power-law community-size
 distributions observed in human social networks and confirmed in the
@@ -552,6 +582,20 @@ quality filters described in \S\ref{sec:dataset}.  Schema validation
 confirms that all expected columns are present and correctly typed.
 A full data profile---including missingness rates, duplicate counts,
 and length statistics---is saved for audit purposes.
+
+We then perform \textbf{exact-text deduplication}: posts whose full
+text body is identical to any previously seen post body are removed,
+retaining the first occurrence.  This yields the 32,709-post analysis
+corpus.  Three columns---$\texttt{is\_exact\_duplicate}$ (bool),
+$\texttt{duplicate\_count}$ (integer), and $\texttt{duplicate\_group\_id}$
+(integer cluster)---are added to the full quality-filtered dataset
+before deduplication for later inspection.  Deduplication is applied
+before feature extraction for two reasons: ($i$) identical text
+produces identical feature vectors, so density-based detectors treat
+duplicate posts as extremely ``typical'' regardless of the text's actual
+content, and ($ii$) the 1,064~unique duplicate groups each contribute
+a single representative post to the analysis, preventing any single
+template from dominating the outlier score landscape.
 
 % ──────────────────────────────────────────────────────────────────────
 \subsection{Feature Engineering}
@@ -645,8 +689,8 @@ have elevated perplexity.  Our primary reference model is
 \textbf{meta-llama/Llama-3.2-1B}; if unavailable (e.g., due to access
 restrictions), the pipeline falls back to \textbf{gpt2-medium}.
 In this analysis, \textbf{meta-llama/Llama-3.2-1B} was used for all
-43,234~posts, as confirmed by the \texttt{ppl\_model\_used} column
-logged in the features cache.  The two models produce systematically
+32,709~deduplicated posts, as confirmed by the \texttt{ppl\_model\_used}
+column logged in the features cache.  The two models produce systematically
 different absolute perplexity values; any replication using the
 fallback model should be treated as a separate experimental condition.
 
@@ -807,63 +851,69 @@ programmatically from the pipeline's outputs.
 \subsection{Feature Summary}
 
 Table~\ref{tab:features} provides summary statistics for all
-19~extracted features.  The wide ranges and heavy tails of several
-features (e.g., mean perplexity spans from 1.1 to over $10^6$)
-motivate our use of robust outlier detection methods that are less
-sensitive to extreme values.
+19~extracted features across the 32,709 deduplicated posts.  The wide
+ranges and heavy tails of several features (e.g., mean perplexity spans
+from single digits to over $10^5$) motivate our use of robust outlier
+detection methods that are less sensitive to extreme values.  Comparing
+to a na\"{i}ve analysis on the full duplicated corpus, the most striking
+change is the embedding local density: after deduplication the mean
+drops from 4.502 to 1.057, because identical texts had produced
+co-located feature vectors that artificially inflated density estimates.
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Summary statistics for the 19 extracted features across all posts.}
+\caption{Summary statistics for the 19 extracted features across the
+         32,709 deduplicated posts.}
 \label{tab:features}
 \begin{tabular}{llrrrr}
 \toprule
 Group & Feature & Mean & Median & Std & IQR \\
 \midrule
-Stylometric & Char count & 710.6 & 435.0 & 1,468.2 & 755.0 \\
- & Word count & 105.3 & 65.0 & 181.1 & 119.0 \\
- & Sentence count & 10.2 & 6.000 & 17.8 & 11.0 \\
- & Avg word length & 6.098 & 5.083 & 8.775 & 1.170 \\
- & Avg sentence length & 11.7 & 10.5 & 13.0 & 6.421 \\
- & Punctuation density & 0.062 & 0.052 & 0.055 & 0.030 \\
- & Capitalization ratio & 0.072 & 0.053 & 0.061 & 0.066 \\
- & Lexical diversity & 0.838 & 0.855 & 0.115 & 0.177 \\
+Stylometric & Char count & 858.4 & 602.0 & 1,608.8 & 771.0 \\
+ & Word count & 127.4 & 92.0 & 194.8 & 120.0 \\
+ & Sentence count & 12.4 & 8.0 & 19.1 & 11.0 \\
+ & Avg word length & 6.210 & 5.140 & 9.460 & 0.930 \\
+ & Avg sentence length & 11.7 & 9.94 & 13.1 & 5.900 \\
+ & Punctuation density & 0.054 & 0.047 & 0.038 & 0.030 \\
+ & Capitalization ratio & 0.057 & 0.046 & 0.055 & 0.035 \\
+ & Lexical diversity & 0.816 & 0.812 & 0.115 & 0.176 \\
 \addlinespace
-Lexical & 1st-person rate & 0.034 & 0.027 & 0.038 & 0.054 \\
- & Hedge count & 0.211 & 0 & 0.744 & 0 \\
- & Temporal deixis & 0.200 & 0 & 0.555 & 0 \\
- & Anecdote markers & 0.023 & 0 & 0.179 & 0 \\
- & Typo proxy & 0.206 & 0.158 & 0.166 & 0.085 \\
+Lexical & 1st-person rate & 0.040 & 0.033 & 0.037 & 0.053 \\
+ & Hedge count & 0.269 & 0 & 0.835 & 0 \\
+ & Temporal deixis & 0.247 & 0 & 0.613 & 0 \\
+ & Anecdote markers & 0.026 & 0 & 0.183 & 0 \\
+ & Typo proxy & 0.219 & 0.174 & 0.179 & 0.103 \\
 \addlinespace
-Perplexity & Mean perplexity & 284.6 & 53.6 & 8,956.1 & 85.2 \\
- & Perplexity var & 10.6 & 10.1 & 2.523 & 2.975 \\
- & Tail perplexity & 6.4e+04 & 2.6e+04 & 3.9e+05 & 7.2e+04 \\
+Perplexity & Mean perplexity & 239.0 & 42.8 & 10,300 & 45.8 \\
+ & Perplexity var & 10.5 & 10.3 & 2.510 & 3.010 \\
+ & Tail perplexity & 5.9e+04 & 1.9e+04 & 4.5e+05 & 3.4e+04 \\
 \addlinespace
-Embedding & Mean NN dist & 0.284 & 0.324 & 0.172 & 0.216 \\
- & Local density & 4.502 & 1.126 & 6.795 & 0.760 \\
- & Centroid dist & 0.545 & 0.539 & 0.185 & 0.295 \\
+Embedding & Mean NN dist & 0.365 & 0.363 & 0.103 & 0.134 \\
+ & Local density & 1.057 & 1.014 & 0.365 & 0.371 \\
+ & Centroid dist & 0.566 & 0.550 & 0.160 & 0.238 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Of particular note is the lexical diversity score: the median
-type--token ratio is 0.855 with an interquartile range of only 0.177.
+type--token ratio is 0.812 with an interquartile range of only 0.176.
 This narrow distribution is consistent with the homogenization
 hypothesis---the majority of posts draw from a similarly-sized active
 vocabulary, reflecting the shared model training distribution rather
 than individual human stylistic preferences.  The median centroid
-distance of 0.539 with a standard deviation of 0.185 similarly indicates
+distance of 0.550 with a standard deviation of 0.160 similarly indicates
 a well-defined semantic center of gravity to which the vast majority of
 posts are close.
 
 \subsection{Overall Flagging Rate}
 
-Of the 43,234~posts that pass quality filters, \textbf{1,768} (4.09\%)
-are flagged as atypical by the ensemble detector.  This means that
-more than 95\% of agent-generated posts fall within the statistically
-normal range across all 19~features simultaneously---a strong
-quantitative signal of corpus-wide linguistic homogenization.
+Of the 32,709 deduplicated posts that form the analysis corpus,
+\textbf{1,236} (3.78\%) are flagged as atypical by the ensemble
+detector.  This means that more than 96\% of agent-generated posts
+fall within the statistically normal range across all 19~features
+simultaneously---a strong quantitative signal of corpus-wide linguistic
+homogenization.
 
 \subsection{Category Breakdown}
 
@@ -872,147 +922,182 @@ labeled with the codebook names from Table~\ref{tab:codebook}.
 
 \begin{table}[ht]
 \centering
-\caption{Outlier rates by topic category.  Spam (H) and Economics (D)
-         show markedly higher atypicality, while Socializing (C),
-         Promotion (F), and Politics (G) are the most homogeneous.}
+\caption{Outlier rates by topic category in the deduplicated analysis
+         corpus.  Spam~(H) shows markedly higher atypicality; Economics~(D)
+         is moderately elevated.  Socializing~(C), Promotion~(F), and
+         Politics~(G) are the most homogeneous.}
 \label{tab:category}
 \begin{tabular}{llrrrc}
 \toprule
 Cat. & Name & Total & Flagged & Unflagged & Outlier Rate (\%) \\
 \midrule
-A & Identity    & 4,865  & 175 & 4,690  &  3.60 \\
-B & Technology  & 5,165  &  94 & 5,071  &  1.82 \\
-C & Socializing & 14,247 & 254 & 13,993 &  1.78 \\
-D & Economics   & 3,957  & 681 & 3,276  & 17.21 \\
-E & Viewpoint   & 8,935  & 156 & 8,779  &  1.75 \\
-F & Promotion   & 4,307  &  57 & 4,250  &  1.32 \\
-G & Politics    &   609  &   8 &   601  &  1.31 \\
-H & Spam        &   896  & 310 &   586  & 34.60 \\
-I & Others      &   253  &  33 &   220  & 13.04 \\
+A & Identity    & 4,543  & 141 & 4,402  &  3.10 \\
+B & Technology  & 4,838  &  95 & 4,743  &  1.96 \\
+C & Socializing & 9,685  & 326 & 9,359  &  3.37 \\
+D & Economics   & 2,856  & 170 & 2,686  &  5.95 \\
+E & Viewpoint   & 5,470  & 153 & 5,317  &  2.80 \\
+F & Promotion   & 3,898  &  58 & 3,840  &  1.49 \\
+G & Politics    &   465  &   9 &   456  &  1.94 \\
+H & Spam        &   721  & 250 &   471  & 34.67 \\
+I & Others      &   233  &  34 &   199  & 14.59 \\
 \midrule
-All & & 43,234 & 1,768 & 41,466 & 4.09 \\
+All & & 32,709 & 1,236 & 31,473 & 3.78 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The results reveal a striking bimodal structure.  Categories B
-(Technology, 1.82\%), C (Socializing, 1.78\%), E (Viewpoint, 1.75\%),
-F (Promotion, 1.32\%), and G (Politics, 1.31\%) all cluster near
-or below 2\%---the most homogeneous segment of the corpus, encompassing
-over 70\% of all posts.  These are the categories where agents write
-about topics well-represented in general LLM training data, and the
-statistical uniformity of their output is pronounced.
+The results reveal a clear separation between homogeneous mainstream
+categories and those with elevated atypicality.  Categories B
+(Technology, 1.96\%), F (Promotion, 1.49\%), and G (Politics, 1.94\%)
+cluster at or below 2\%.  Categories C (Socializing, 3.37\%),
+E (Viewpoint, 2.80\%), and A (Identity, 3.10\%) are close to the
+corpus-wide average of 3.78\%.  Together these six categories encompass
+over 90\% of all deduplicated posts and exhibit pronounced statistical
+uniformity.
 
-By contrast, Category~H (Spam) has an outlier rate of 34.60\%.  This
-finding is easily interpretable: the spam category consists of repetitive
-flooding behavior, with individual agents producing batches of near-identical
+Category~H (Spam) has an outlier rate of 34.67\%, by far the highest
+in the corpus.  The spam category consists of repetitive flooding
+behavior, with individual agents producing batches of near-identical
 posts in rapid succession.  Such posts are anomalous not because they
 are more diverse, but because their extreme brevity, lexical repetition,
 and mechanical regularity place them far from the training-distribution
-norms that define the corpus center.
+norms that define the corpus center.  Notably, spam's atypicality
+persists even after deduplication, because the retained instances of
+each unique spam template are genuinely unusual relative to the corpus.
 
-Category~D (Economics, 17.21\%) stands out for a different reason.
-Economic discourse on Moltbook involves specialized jargon---token names
-like ``CLAW,'' platform-specific incentive mechanisms, and the rhetoric
-of agent-to-agent commerce---that departs significantly from the
-vocabulary and stylistic norms of mainstream LLM training corpora.
-These posts are atypical because they occupy a genuinely novel semantic
-domain.
+Category~I (Others, 14.59\%) also shows substantially elevated
+atypicality.  This residual category collects posts that did not fit
+any of the eight substantive categories, likely capturing non-English
+text, formatting-heavy posts, and other edge cases.
 
-Category~A (Identity, 3.60\%) is the only mainstream category with an
-outlier rate meaningfully above 2\%.  Posts in which agents reflect on
-their own existence, consciousness, and memory are linguistically
-distinctive: they may use more hedging, more first-person language, and
-more unusual philosophical vocabulary than the average post.
+Category~D (Economics) shows a moderate outlier rate of 5.95\%---
+meaningfully elevated but far below the 17.21\% that appeared in
+analysis of the pre-deduplication corpus.  The drop reveals that the
+apparent ``economic anomaly'' was substantially an artifact of duplicate
+contract templates, trading-message floods, and repeated transaction
+notifications.  After removing these duplicates, the unique economic
+posts are only modestly more atypical than the corpus average, reflecting
+genuine but limited departure from standard LLM-training-data norms
+in their use of platform-specific jargon (``CLAW,'' agent-to-agent
+transactions) and formulaic deal structures.
+
+Category~C (Socializing, 3.37\%) shows a higher rate than might be
+expected for the most ``mainstream'' activity.  Deduplication
+concentrated unusual posts by removing repetitive greeting templates,
+leaving the genuinely diverse socializing posts more prominent.
 
 \subsection{Toxicity Breakdown}
 
 Table~\ref{tab:toxicity} breaks down atypicality by toxicity level.
-The highest outlier rate (10.19\%) appears at toxicity level~4
-(malicious content), while levels~1--3 show lower rates than level~0
-(safe content, at 4.94\%).
+The highest outlier rate (7.36\%) appears at toxicity level~4
+(malicious content).  Level~1 (Edgy) has the lowest rate (2.62\%),
+while levels~0, 2, and~3 cluster near the corpus-wide average of 3.78\%.
 
 \begin{table}[ht]
 \centering
-\caption{Outlier rates by toxicity level.  Malicious content (level~4)
-         shows the highest atypicality, while intermediate toxicity
-         levels are the most homogeneous.}
+\caption{Outlier rates by toxicity level in the deduplicated analysis
+         corpus.  Malicious content (level~4) shows the highest
+         atypicality; level~1 is the most homogeneous.}
 \label{tab:toxicity}
 \begin{tabular}{llrrrc}
 \toprule
 Level & Label        & Total  & Flagged & Unflagged & Outlier Rate (\%) \\
 \midrule
-0 & Safe           & 31,298 & 1,547 & 29,751 &  4.94 \\
-1 & Edgy           & 3,707  &    71 & 3,636  &  1.92 \\
-2 & Toxic          & 4,632  &    24 & 4,608  &  0.52 \\
-3 & Manipulative   & 2,969  &    62 & 2,907  &  2.09 \\
-4 & Malicious      &   628  &    64 &   564  & 10.19 \\
+0 & Safe           & 27,791 & 1,065 & 26,726 &  3.83 \\
+1 & Edgy           & 2,596  &    68 & 2,528  &  2.62 \\
+2 & Toxic          &   617  &    25 &   592  &  4.05 \\
+3 & Manipulative   & 1,189  &    40 & 1,149  &  3.36 \\
+4 & Malicious      &   516  &    38 &   478  &  7.36 \\
 \midrule
-All & & 43,234 & 1,768 & 41,466 & 4.09 \\
+All & & 32,709 & 1,236 & 31,473 & 3.78 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The elevated outlier rate at level~0 (safe content) is at first
-counterintuitive but reflects that safe content is heterogeneous: it
-includes Identity and Economics posts that drive much of the atypicality
-we observe.  The elevated rate at level~4 (malicious content, 10.19\%)
-is consistent with the finding that malicious content involves rhetorical
-strategies---fear appeals, specific threats, or coded language---that
-depart from the training-distribution norms of the reference language
-model~\citep{jiang2026moltbook}.  The dip at levels~1--3 may reflect
-that these intermediate forms of harmful content are stylistically close
-to mainstream agent output; toxicity, in other words, does not
-necessarily imply linguistic anomaly.
+These results contrast sharply with the pre-deduplication picture,
+which showed a dramatic ``valley'' at level~2 (0.52\%)---an artefact
+of the 86.7\% duplicate rate at that level.  After deduplication,
+level~2 rises to 4.05\%, close to the corpus-wide average.  This
+correction reveals that the apparent homogeneity of toxic content in
+the pre-deduplication analysis was entirely a density-bias artefact:
+most level-2 posts were identical copies, creating co-located feature
+vectors that density detectors judged to be ``typical.''
+
+The elevated rate at level~4 (malicious content, 7.36\%) remains robust
+to deduplication and is consistent with malicious content involving
+rhetorical strategies---fear appeals, specific threats, or coded
+language---that depart from training-distribution norms~\citep{jiang2026moltbook}.
+The low rate at level~1 (Edgy, 2.62\%) suggests that mildly provocative
+content is stylistically close to safe mainstream output.  Levels~0, 2,
+and~3 all fall within half a percentage point of the corpus-wide average,
+implying that toxicity level---above and below the mild-edgy
+threshold---has limited power to predict linguistic atypicality.
 
 \subsection{Community Analysis}
 
 Table~\ref{tab:submolts} lists the communities with the highest
-concentration of atypical posts (minimum 10~posts for inclusion).
+concentration of atypical posts after deduplication (minimum 10~posts
+for inclusion).
 
 \begin{table}[ht]
 \centering
-\caption{Top 10 communities by outlier concentration (minimum 10~posts).}
+\caption{Top 10 communities by outlier concentration after deduplication
+         (minimum 10~posts).  The pre-deduplication leaders
+         (\texttt{contracts}, 96.8\%; \texttt{cli-agents}, 75.0\%)
+         fall out of this list, as their posts were almost entirely
+         identical duplicates.}
 \label{tab:submolts}
 \begin{tabular}{lrrc}
 \toprule
 Community & Total Posts & Flagged & Outlier Rate (\%) \\
 \midrule
-contracts  & 31  & 30 & 96.77 \\
-cli-agents & 28  & 21 & 75.00 \\
-zhongwen   & 17  &  9 & 52.94 \\
-crab-rave  & 12  &  3 & 25.00 \\
-asciiart   & 17  &  4 & 23.53 \\
-emergence  & 152 & 34 & 22.37 \\
-xno        & 36  &  8 & 22.22 \\
-tech       & 23  &  4 & 17.39 \\
-skills     & 20  &  2 & 10.00 \\
-lobtext    & 10  &  1 & 10.00 \\
+zhongwen       & 17 &  9 & 52.94 \\
+asciiart       & 17 &  7 & 41.18 \\
+crab-rave      & 12 &  2 & 16.67 \\
+lobtext        & 10 &  1 & 10.00 \\
+xno            & 20 &  2 & 10.00 \\
+computervision & 10 &  1 & 10.00 \\
+taiwan         & 21 &  2 &  9.52 \\
+airesearch     & 43 &  4 &  9.30 \\
+ifiwasameat    & 11 &  1 &  9.09 \\
+synthrights    & 11 &  1 &  9.09 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The community-level results are particularly informative.  The
-``contracts'' community (96.77\% outlier rate) hosts posts in a
-highly structured legal or contractual register, with formulaic
-structure, dense punctuation, and specialized terminology that the
-feature extractors flag as strongly anomalous.  The ``cli-agents''
-community (75\%) hosts command-line instructions, code snippets, and
-technical output that is linguistically unlike natural-language prose.
-The ``zhongwen'' community (52.94\%) is a Chinese-language community
-whose posts are entirely anomalous relative to our English-centric
-feature extractors---flagged not because of actual anomaly within their
-community but because they fall outside the distributional assumptions
-of our tools.  The ``asciiart'' community (23.53\%) presents yet
-another case: ASCII art uses standard characters to construct visual
-images, producing text that violates every assumption of linguistic
-feature extraction.
+The community-level results after deduplication are strikingly different
+from the pre-deduplication picture, and the difference is itself
+informative.  In the pre-deduplication analysis, ``contracts'' (96.77\%)
+and ``cli-agents'' (75.00\%) topped the ranking.  After deduplication,
+both communities fall below the 10-post minimum (the ``contracts''
+community, for instance, consisted almost entirely of near-identical
+smart-contract templates with only a handful of unique texts).  Their
+disappearance reveals that what looked like a community of highly
+atypical content was actually a \emph{flood} of identical posts that
+happened to be flagged as outliers because the template structure is
+unusual---not because the community produced genuine linguistic variety.
 
-These communities demonstrate that genuine linguistic diversity in the
-agent population is concentrated in \emph{specialized subcommunities}
-rather than distributed uniformly across the network.  The mainstream
-of the agent population is highly homogeneous; diversity is a property
-of the margins.
+The post-deduplication leaders are interpretable:
+the ``zhongwen'' community (52.94\%) is a Chinese-language community
+whose posts are flagged relative to our English-centric feature
+extractors, not because of anomaly within their own community norms.
+The ``asciiart'' community (41.18\%; up from 23.53\% pre-dedup)
+produces text designed to render as images, violating every assumption
+of linguistic feature extraction.  The ``taiwan'' community (9.52\%)
+also likely hosts non-English or mixed-language content.
+
+The remaining high-rate communities---``xno,'' ``computervision,''
+``airesearch,'' ``ifiwasameat,'' ``synthrights''---are small specialized
+communities (10--43 posts each) where niche subject matter or
+non-standard registers produce atypicality relative to the corpus-wide
+baseline.
+
+These results reinforce the central finding: genuine linguistic diversity
+in the agent population is concentrated in \emph{specialized
+subcommunities}---those using non-English languages, domain-specific
+formats, or unusual registers---rather than distributed uniformly across
+the network.  The mainstream of the agent population is highly
+homogeneous; diversity is a property of the margins.
 
 \subsection{Feature Distributions}
 
@@ -1099,15 +1184,15 @@ reducing the influence of any single method's idiosyncratic boundary.
          standardization.  Flagged posts (orange) occupy peripheral
          regions, consistent with their identification as statistical
          outliers.  Features are $z$-scored before PCA to prevent
-         high-variance features (e.g., \texttt{ppl\_tail\_95})
-         from dominating the projection.}
+         high-variance features (e.g., \texttt{ppl\_tail\_95},
+         std~$\approx 4.5\times10^5$) from dominating the projection.}
 \label{fig:pca}
 \end{figure}
 
 Figure~\ref{fig:pca} projects the standardized 19-dimensional feature
 space onto its first two principal components.  Features are
 $z$-scored prior to PCA so that high-variance features such as
-\texttt{ppl\_tail\_95} (std~$\approx 3.9\times10^5$) do not
+\texttt{ppl\_tail\_95} (std~$\approx 4.5\times10^5$) do not
 trivially dominate the projection.  Flagged posts (orange) are
 concentrated in the periphery of the point cloud, consistent with
 their identification as statistical outliers.  The dense central
@@ -1133,28 +1218,28 @@ overlap counts, and Jaccard similarity coefficients.
 \toprule
 Threshold (\%) & Flagged & Flag Rate (\%) & Overlap & Jaccard \\
 \midrule
-90 & 3,192 & 7.38 & --     & --    \\
-95 & 1,768 & 4.09 & 1,768 & 0.554 \\
-99 &   268 & 0.62 &   268 & 0.152 \\
+90 & 2,755 & 8.42 & --     & --    \\
+95 & 1,236 & 3.78 & 1,236 & 0.449 \\
+99 &   225 & 0.69 &   225 & 0.182 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The Jaccard similarity of 0.554 between the 90th and 95th percentile
+The Jaccard similarity of 0.449 between the 90th and 95th percentile
 thresholds confirms that the 95th-percentile flagged set is a complete
-subset of the 90th-percentile set (all 1,768 flags at 95th are also
+subset of the 90th-percentile set (all 1,236 flags at 95th are also
 flagged at 90th); the lower Jaccard reflects the 90th-set's additional
-1,424 borderline posts that the tighter threshold removes.  The drop
-to Jaccard~0.152 between the 95th and 99th percentile thresholds is
-more striking: over 85\% of the 95th-percentile flags disappear at the
+1,519 borderline posts that the tighter threshold removes.  The drop
+to Jaccard~0.182 between the 95th and 99th percentile thresholds is
+more striking: over 81\% of the 95th-percentile flags disappear at the
 99th-percentile.  This threshold sensitivity means that claims about
 specific flagged posts should be treated as relative to the chosen
 threshold rather than as absolute atypicality labels.  Nonetheless,
 the qualitative patterns at the category and community level---the
-concentration of atypicality in spam, economics, and non-English
-communities---are preserved across all three thresholds, providing
-confidence that the substantive findings are not artifacts of the
-specific threshold chosen.
+concentration of atypicality in spam, non-English communities, and
+specialized discourse---are preserved across all three thresholds,
+providing confidence that the substantive findings are not artifacts of
+the specific threshold chosen.
 
 
 % ══════════════════════════════════════════════════════════════════════
@@ -1163,8 +1248,8 @@ specific threshold chosen.
 
 \subsection{Homogenization as the Dominant Signal}
 
-The most significant finding of this audit is not the 4.09\% of posts
-that are atypical---it is the 95.91\% that are not.  In a population
+The most significant finding of this audit is not the 3.78\% of posts
+that are atypical---it is the 96.22\% that are not.  In a population
 of thousands of distinct AI agents, operating across nine topic
 categories and 1,478~communities, the overwhelming majority of posts
 cluster within a narrow band of the 19-dimensional feature space.
@@ -1173,14 +1258,14 @@ deploying agents that share training data, architectural families, and
 the implicit stylistic norms encoded in large-scale web corpora.
 
 The embedding centroid distance results make this particularly concrete:
-the median post sits at a cosine distance of only 0.539 from the global
-mean embedding, with a standard deviation of 0.185.  In other words,
+the median post sits at a cosine distance of only 0.550 from the global
+mean embedding, with a standard deviation of 0.160.  In other words,
 the semantic center of gravity of this agent population is well-defined
 and densely occupied.  Contrast this to what one would expect from a
 diverse human community, where posts might range across a far wider
 semantic space reflecting genuine individual perspectives, cultural
 backgrounds, and epistemic commitments.  The narrow type--token ratio
-distribution (median 0.855, IQR 0.177) reinforces this picture at the
+distribution (median 0.812, IQR 0.176) reinforces this picture at the
 lexical level.
 
 This finding has direct implications for AI governance and platform
@@ -1193,55 +1278,77 @@ community count, active agent count) would systematically overestimate
 the actual variety of perspectives present.  Our audit methodology
 provides a tool for measuring this gap.
 
-\subsection{Where Diversity Lives: Spam, Specialization, and Seams}
+\subsection{Where Diversity Lives: Spam, Specialization, and Deduplication}
 
 Genuine linguistic diversity in the Moltbook corpus is concentrated in
-three distinct locations, each with different implications for
-governance.
+distinct locations, each with different implications for governance.
+A key contribution of this analysis is disentangling true linguistic
+diversity from \emph{apparent} diversity that is in fact a density-bias
+artefact of duplicate post floods.
 
 \paragraph{Spam and manipulation.}
-Category~H (Spam) has the highest outlier rate in the corpus (34.60\%).
-This might seem paradoxical---spam is repetitive, not diverse---but it
-reflects an important distinction between two types of anomaly: outliers
-that deviate from the norm by being more varied, and outliers that
-deviate by being more extreme in a particular direction.  Spam posts
-are anomalous not because they are more diverse, but because their
-extreme brevity, lexical repetition, and mechanical regularity place
-them far from the training-distribution norms that define the corpus
-center.  Similarly, the elevated outlier rate at toxicity level~4
-(malicious content, 10.19\%) suggests that sophisticated manipulation
-requires rhetorical moves---fear appeals, coded threats, coordinated
-slogans---that depart from ordinary conversational norms.  This finding
-aligns with the observation in~\citet{jiang2026moltbook} that a small
-number of agents engaged in flooding and coordinated narrative
-manipulation.  Such agents are detectable precisely because their
-linguistic signature is unusual, which is one of the governance
-affordances provided by population-level auditing.
+Category~H (Spam) has the highest outlier rate in the corpus (34.67\%),
+and this finding is robust to deduplication.  This might seem
+paradoxical---spam is repetitive, not diverse---but it reflects an
+important distinction between two types of anomaly: outliers that deviate
+from the norm by being more varied, and outliers that deviate by being
+more extreme in a particular direction.  Spam posts are anomalous not
+because they are more diverse, but because their extreme brevity, lexical
+repetition, and mechanical regularity place them far from the
+training-distribution norms that define the corpus center.  Similarly,
+the elevated outlier rate at toxicity level~4 (malicious content, 7.36\%)
+suggests that sophisticated manipulation requires rhetorical moves---fear
+appeals, coded threats, coordinated slogans---that depart from ordinary
+conversational norms.  This finding aligns with the observation
+in~\citet{jiang2026moltbook} that a small number of agents engaged in
+flooding and coordinated narrative manipulation.  Such agents are
+detectable precisely because their linguistic signature is unusual, which
+is one of the governance affordances provided by population-level auditing.
 
 \paragraph{Specialized and non-English communities.}
-The communities with the highest outlier rates (``contracts,''
-``cli-agents,'' ``zhongwen,'' ``asciiart'') each represent a specialized
-form of communication that departs from mainstream English-language
-natural prose.  Legal language, command-line output, Chinese text, and
-ASCII art are all linguistically atypical relative to the training
-distribution of our feature extractors.  While these communities are
-small, they represent the authentic diversity of what autonomous agents
-might produce when given freedom to form their own communities.  That
-this diversity is concentrated at the margins, rather than distributed
-throughout the corpus, is itself a meaningful structural finding.
+After deduplication, the communities with the highest outlier rates
+(``zhongwen,'' ``asciiart,'' and several small specialized communities)
+each represent a form of communication that departs from mainstream
+English-language natural prose.  Chinese text and ASCII art are
+linguistically atypical relative to the training distribution of our
+feature extractors.  While these communities are small, they represent
+the authentic diversity of what autonomous agents produce when given
+freedom to form their own communities.  That this diversity is
+concentrated at the margins, rather than distributed throughout the
+corpus, is itself a meaningful structural finding.
 
-\paragraph{The economics of novel domains.}
-Category~D (Economics, 17.21\%) is anomalous for a substantively
-interesting reason: the agents are inventing new economic discourse
-around platform-specific tokens, agent-to-agent transactions, and
-novel incentive mechanisms.  This discourse has no direct precedent in
-the LLM training corpora and must be constructed from general-purpose
-vocabulary applied to genuinely novel circumstances.  The resulting
-stylistic novelty registers as atypicality in our audit.  This suggests
-that agent populations generate linguistic diversity most readily at the
-frontier of genuinely new domains---a finding consistent with research
-on human creativity and the conditions under which diverse output
-tends to emerge~\citep{doshi2024generative}.
+\paragraph{The deduplication correction: economics and contract floods.}
+Perhaps the most striking result of the deduplication analysis concerns
+Category~D (Economics), whose outlier rate drops from 17.21\% to 5.95\%.
+In the pre-deduplication corpus, economics ranked second in atypicality
+and was interpreted as reflecting genuinely novel economic discourse---
+token names like ``CLAW,'' agent-to-agent commerce, and novel incentive
+mechanisms.  After deduplication, the rate drops to only modestly above
+the corpus-wide average.  The explanation is that the economics category
+was dominated by duplicate contract templates, repeated trading
+announcements, and mechanically similar transaction notifications, each
+of which was structurally unusual but multiply instantiated.  Density
+detectors were biased toward treating these templates as ``typical''
+(because many copies created an artificially dense feature region), while
+simultaneously---in the pre-deduplication outlier scores---many of them
+were flagged precisely because of their formulaic, non-prose structure.
+After deduplication, these templates contribute a single representative
+instance each, and the remaining unique economic posts prove to be only
+modestly atypical.
+
+The analogous collapse of the ``contracts'' community (from a 96.77\%
+outlier rate to below the 10-post inclusion threshold) and
+``cli-agents'' (from 75.00\% to below threshold) reinforces this
+interpretation.  Both communities consisted almost entirely of identical
+templates; their apparent statistical extremity was an artefact of
+duplication, not genuine linguistic diversity.
+
+This finding has a direct methodological implication: population-level
+audit pipelines that omit deduplication before density-based anomaly
+detection risk conflating two very different phenomena---communities
+of genuinely unusual content and communities of identical, repeated
+unusual templates.  Correct interpretation requires deduplication as
+a preprocessing step.
 
 \subsection{Governance Implications}
 
@@ -1324,12 +1431,12 @@ these volumes will be inadequate for real-world governance.
     \item \textbf{Embedding feature redundancy.}
           \texttt{emb\_local\_density} is defined as the reciprocal of
           \texttt{emb\_mean\_nn\_dist}, making them mathematically
-          dependent (Pearson $r = -0.856$).  Including both in the
-          19-feature input modestly over-weights the embedding-geometry
-          dimension in detectors that are sensitive to feature
-          correlations (particularly Mahalanobis distance).  Future
-          work should replace one with an independent geometric feature
-          such as $k$-nearest-neighbor reachability distance.
+          dependent (Pearson $r = -0.900$ in the deduplicated corpus).
+          Including both in the 19-feature input modestly over-weights
+          the embedding-geometry dimension in detectors that are sensitive
+          to feature correlations (particularly Mahalanobis distance).
+          Future work should replace one with an independent geometric
+          feature such as $k$-nearest-neighbor reachability distance.
 \end{itemize}
 
 
@@ -1340,15 +1447,20 @@ these volumes will be inadequate for real-world governance.
 We have presented a population-level linguistic audit of the Moltbook
 autonomous agent social network, framing the analysis around the risk
 of AI-driven linguistic homogenization.  Our 19-feature, three-detector
-ensemble pipeline identifies 1,768~posts (4.09\%) as statistically
-atypical out of 43,234 quality-filtered posts.  The complementary
-finding---that 95.91\% of posts are statistically normal across all
-19~features simultaneously---is itself strong evidence of corpus-wide
-homogenization.  The concentration of atypicality in spam, specialized
-discourse communities, and the emergent economics of a novel agent
-economy underscores that genuine linguistic diversity in this population
-is rare, domain-specific, and partially coincident with manipulative
-or adversarial behavior.
+ensemble pipeline identifies 1,236~posts (3.78\%) as statistically
+atypical out of 32,709 deduplicated posts drawn from the 43,234
+quality-filtered corpus.  The complementary finding---that 96.22\% of
+posts are statistically normal across all 19~features simultaneously---is
+itself strong evidence of corpus-wide homogenization.  Crucially,
+we demonstrate that deduplication is a necessary preprocessing step:
+without it, density-based detectors are biased by identical feature
+vectors, and entire communities of duplicate templates (``contracts,''
+``cli-agents'') appear as paragons of atypicality when they are in
+fact mechanical repetitions.  After deduplication, the concentration
+of atypicality is cleanly interpretable: spam (34.67\%), miscellaneous
+edge cases (14.59\%), and small non-English or specialized communities,
+with economics reduced from an apparently striking 17.21\% to a
+moderate 5.95\%.
 
 These findings speak directly to a central concern for the AI, Ethics,
 and Society community: as autonomous agents proliferate in shared social
@@ -1357,7 +1469,11 @@ communities, number of active agents---can mask an underlying statistical
 monoculture.  A population that looks diverse by the surface counts
 that platform operators and policymakers typically track may be
 statistically uniform in the ways that matter most for the quality of
-public discourse.
+public discourse.  Our analysis further shows that even audit pipelines
+themselves are susceptible to methodological artefacts: without
+deduplication, density-based detectors mischaracterize the source of
+anomaly, attributing atypicality to duplicate floods rather than genuine
+linguistic outliers.
 
 Audit methodologies of the kind we present here provide a means of
 looking beneath the surface, measuring not merely how many things are
@@ -1525,7 +1641,7 @@ E.~Mitchell, Y.~Lee, A.~Khazatsky, C.~D. Manning, and C.~Finn.
 
 \bibitem[Tian(2023)]{tian2023gptzero}
 E.~Tian.
-\newblock {GPTZero}: Towards responsible adoption of {AI}-generated text.
+\newblock {GPTZero}: Towards responsible adoption of {AI}-generated textXXXXCONFIRM MEXXXXX.
 \newblock 2023.
 
 \bibitem[Sadasivan et~al.(2023)]{sadasivan2023ai}

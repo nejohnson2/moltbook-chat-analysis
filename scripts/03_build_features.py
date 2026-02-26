@@ -63,11 +63,11 @@ def main() -> None:
     logger = setup_logging()
     logger.info("=== Stage 3: Build Features ===")
 
-    df = load_parquet("data/processed/posts_clean.parquet")
+    df = load_parquet("data/processed/posts_deduped.parquet")
     text_col = cfg["text_column"]
     id_col = cfg["id_column"]
     texts = df[text_col].fillna("").tolist()
-    logger.info("Loaded %d posts", len(df))
+    logger.info("Loaded %d posts (deduplicated)", len(df))
 
     out_dir = Path("outputs/features")
     ensure_dir(out_dir)

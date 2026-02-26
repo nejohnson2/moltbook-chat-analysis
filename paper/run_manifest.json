@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-20T19:29:32.136121+00:00",
+  "timestamp": "2026-02-26T13:36:59.192725+00:00",
   "python_version": "3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]",
   "platform": "macOS-15.7.4-arm64-arm-64bit-Mach-O",
-  "git_hash": "6412fa2",
+  "git_hash": "e301ab8",
   "package_versions": {
     "datasets": "4.5.0",
     "pandas": "3.0.0",
@@ -36,7 +36,8 @@
     ],
     "audit_sample_size": 100,
     "min_text_length": 10,
-    "max_text_length": 50000
+    "max_text_length": 50000,
+    "mincovdet_support_fraction": 0.75
   },
   "stage": "paper"
 }

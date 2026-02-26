@@ -67,6 +67,8 @@ moltbook-chat-analysis/
 ├── data/
 │   ├── raw/                  # Downloaded from HuggingFace (gitignored)
 │   └── processed/            # Cleaned data (gitignored)
+│       ├── posts_clean.parquet    # All posts passing length checks, with duplicate flags
+│       └── posts_deduped.parquet  # One row per unique text — used by all pipeline stages
 └── outputs/                  # All pipeline outputs (gitignored)
 ```
 
@@ -75,8 +77,8 @@ moltbook-chat-analysis/
 | Make target        | Script                     | What it does                                     |
 |--------------------|----------------------------|--------------------------------------------------|
 | `make data`        | `01_download_data.py`      | Download Moltbook posts from HuggingFace         |
-| `make validate`    | `02_validate_data.py`      | Schema checks, missingness, duplicates, quality  |
-| `make features`    | `03_build_features.py`     | Extract stylometric, lexical, perplexity, and embedding features |
+| `make validate`    | `02_validate_data.py`      | Schema checks, missingness, text quality; flags exact-duplicate posts and writes a deduplicated copy of the corpus |
+| `make features`    | `03_build_features.py`     | Extract stylometric, lexical, perplexity, and embedding features (runs on deduplicated posts only) |
 | `make outliers`    | `04_detect_outliers.py`    | Run 3 anomaly detectors + ensemble voting        |
 | `make analyze`     | `05_analyze_results.py`    | Summary tables and plots                         |
 | `make audit`       | `06_make_audit_samples.py` | Stratified samples for blind human review        |
@@ -97,6 +99,7 @@ Three Jupyter notebooks are provided in `notebooks/` for interactive exploration
 | `01_explore_raw_data.ipynb` | Inspect the raw dataset: schema, missingness, text length distributions, category/toxicity/community breakdowns, engagement metrics, duplicates, sample posts |
 | `02_explore_features.ipynb` | Analyze extracted features: summary statistics, histograms for all 19 features, correlation heatmap, box plots by category and toxicity, pairwise scatters, perplexity and embedding deep dives |
 | `03_explore_outliers.ipynb` | Explore detection results: detector score distributions, detector agreement, outlier rates by category and toxicity, flagged vs. unflagged comparisons, PCA projections, inspect individual flagged posts, threshold sensitivity |
+| `04_interactive_feature_explorer.ipynb` | Interactive scatter plot: choose any two features for X/Y axes, color by ensemble flag, exact-duplicate status, topic, or toxicity; click or lasso-select points to read the full post text. Useful for investigating duplicate clusters and outliers. Requires `pip install plotly ipywidgets anywidget`. |
 
 Run from the project root with the venv activated:
 
@@ -203,7 +206,7 @@ Run `pdflatex` twice so that cross-references (tables, figures, bibliography) re
 ## How to interpret key outputs
 
 ### `data_profile.json`
-Lists row counts, missing values, duplicate IDs, and text length statistics. Check this first to understand data quality.
+Lists row counts, missing values, duplicate IDs, and text length statistics. Also records `duplicate_posts` (count of posts whose text appears more than once) and `rows_removed_dedup` (posts removed before feature extraction). Check this first to understand data quality.
 
 ### `features.parquet`
 One row per post with columns like `word_count`, `lexical_diversity`, `first_person_rate`, `ppl_mean`, `emb_centroid_dist`. Higher `ppl_mean` = more surprising to the language model. Higher `emb_centroid_dist` = more semantically unusual.
@@ -219,16 +222,18 @@ Truncated post text with key features. Designed for blind side-by-side compariso
 
 ## Methodology summary
 
-1. **Features**: 19 interpretable features spanning surface style (word/sentence length, punctuation, capitalization, lexical diversity), discourse markers (pronouns, hedges, temporal references, anecdote markers, typo proxy), model-based perplexity (Llama 3.2 / GPT-2), and semantic embeddings (nearest-neighbor distance, log-transformed local density, centroid distance).
+1. **Deduplication**: Stage 2 identifies posts whose full text content is identical to at least one other post. Three columns are added to `posts_clean.parquet`: `is_exact_duplicate` (bool), `duplicate_count` (how many copies share that text), and `duplicate_group_id` (integer cluster ID). A deduplicated copy (`posts_deduped.parquet`, one row per unique text, first occurrence kept) is then written and used by all downstream pipeline stages. `posts_clean.parquet` (all rows) is retained for interactive exploration only. This separation is necessary because density-based detectors (LOF, Mahalanobis) are directly distorted by duplicate feature vectors — identical points artificially inflate local density and bias scores toward "typical."
 
-2. **Outlier detection**: Three unsupervised methods:
+2. **Features**: 19 interpretable features spanning surface style (word/sentence length, punctuation, capitalization, lexical diversity), discourse markers (pronouns, hedges, temporal references, anecdote markers, typo proxy), model-based perplexity (Llama 3.2 / GPT-2), and semantic embeddings (nearest-neighbor distance, log-transformed local density, centroid distance).
+
+3. **Outlier detection**: Three unsupervised methods:
    - **Isolation Forest** — isolates anomalies via random partitioning (contamination=0.05)
    - **Local Outlier Factor** — compares local density to neighbors (contamination="auto"; thresholding is handled by the ensemble)
    - **Robust Mahalanobis distance** — multivariate distance with contamination-resistant covariance (MinCovDet)
 
-3. **Ensemble rule**: A post is flagged only if 2+ of 3 detectors exceed the 95th percentile of their respective score distributions. This majority-vote rule reduces false positives at the cost of some sensitivity.
+4. **Ensemble rule**: A post is flagged only if 2+ of 3 detectors exceed the 95th percentile of their respective score distributions. This majority-vote rule reduces false positives at the cost of some sensitivity.
 
-4. **Statistical tests**: Chi-squared tests with Cramér's V for category/toxicity associations, bootstrap confidence intervals for the overall flag rate, Cohen's d effect sizes for feature differences, and baseline detector comparison.
+5. **Statistical tests**: Chi-squared tests with Cramér's V for category/toxicity associations, bootstrap confidence intervals for the overall flag rate, Cohen's d effect sizes for feature differences, and baseline detector comparison.
 
 ## Troubleshooting
 

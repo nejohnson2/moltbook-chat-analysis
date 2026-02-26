@@ -27,6 +27,10 @@ embedding_model: "all-MiniLM-L6-v2"
 
 # Outlier detection
 outlier_contamination: 0.05
+# support_fraction for MinCovDet (Mahalanobis): fraction of points used to
+# estimate the robust covariance.  Default (None → ~0.501) causes a
+# determinant-increase RuntimeWarning on large datasets; 0.75 is stable.
+mincovdet_support_fraction: 0.75
 outlier_thresholds:
   - 0.90
   - 0.95

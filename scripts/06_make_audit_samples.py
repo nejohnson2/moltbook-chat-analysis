@@ -49,7 +49,7 @@ def main() -> None:
     logger = setup_logging()
     logger.info("=== Stage 6: Make Audit Samples ===")
 
-    posts = load_parquet("data/processed/posts_clean.parquet")
+    posts = load_parquet("data/processed/posts_deduped.parquet")
     features = load_parquet("outputs/features/features.parquet")
     outliers = load_parquet("outputs/outliers/outliers.parquet")
 

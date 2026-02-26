@@ -129,7 +129,7 @@ def main():
     # Load data
     features_path = ROOT / "outputs" / "features" / "features.parquet"
     outliers_path = ROOT / "outputs" / "outliers" / "outliers.parquet"
-    posts_path = ROOT / "data" / "processed" / "posts_clean.parquet"
+    posts_path = ROOT / "data" / "processed" / "posts_deduped.parquet"
 
     features_df = pd.read_parquet(features_path)
     outliers_df = pd.read_parquet(outliers_path)

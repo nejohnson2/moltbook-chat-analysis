@@ -28,6 +28,7 @@ Why it matters:
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Any
 
 import numpy as np
@@ -87,7 +88,7 @@ def run_lof(
     return -clf.negative_outlier_factor_
 
 
-def run_robust_mahalanobis(X: np.ndarray) -> np.ndarray:
+def run_robust_mahalanobis(X: np.ndarray, support_fraction: float = 0.75) -> np.ndarray:
     """Return robust Mahalanobis distances using MinCovDet.
 
     If the robust estimator fails (e.g., too few samples or
@@ -103,8 +104,20 @@ def run_robust_mahalanobis(X: np.ndarray) -> np.ndarray:
         center = X.mean(axis=0)
     else:
         try:
-            mcd = MinCovDet(random_state=42)
-            mcd.fit(X)
+            mcd = MinCovDet(random_state=42, support_fraction=support_fraction)
+            # Suppress the "Determinant has increased" RuntimeWarning from
+            # MinCovDet's C-step iteration.  This is a floating-point
+            # precision artifact that occurs when the dataset geometry pushes
+            # the C-step near its numerical limits.  The warning does not
+            # indicate an incorrect result — the returned covariance matrix
+            # is still a valid robust estimate.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Determinant has increased",
+                    category=RuntimeWarning,
+                )
+                mcd.fit(X)
             cov = mcd.covariance_
             center = mcd.location_
         except Exception as exc:
@@ -163,6 +176,7 @@ def detect_outliers(
     contamination = config.get("outlier_contamination", 0.05)
     seed = config.get("random_seed", 42)
     threshold = config.get("_threshold_override", 0.95)
+    support_fraction = config.get("mincovdet_support_fraction", 0.75)
 
     X, col_names = _prepare_features(features_df)
     logger.info(
@@ -173,7 +187,7 @@ def detect_outliers(
     scores = {
         "iso_forest": run_isolation_forest(X, contamination, seed),
         "lof": run_lof(X),
-        "mahalanobis": run_robust_mahalanobis(X),
+        "mahalanobis": run_robust_mahalanobis(X, support_fraction),
     }
 
     flag = ensemble_flag(scores, threshold)

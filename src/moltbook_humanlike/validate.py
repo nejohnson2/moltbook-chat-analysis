@@ -128,6 +128,45 @@ def check_text_quality(
     }
 
 
+def add_duplicate_flags(df: pd.DataFrame, text_col: str) -> pd.DataFrame:
+    """Add exact-duplicate columns to the dataframe.
+
+    Adds three columns:
+    - is_exact_duplicate (bool): True for any post whose content appears
+      more than once in the dataset (all copies, including the first).
+    - duplicate_count (int): how many posts share this exact text (1 = unique).
+    - duplicate_group_id (Int64, nullable): shared integer ID for all posts in
+      a duplicate group; pd.NA for posts with unique text.
+    """
+    if text_col not in df.columns:
+        logger.warning("Text column '%s' not found; skipping duplicate flagging", text_col)
+        return df
+
+    text = df[text_col].fillna("")
+    counts = text.map(text.value_counts())
+
+    df = df.copy()
+    df["duplicate_count"] = counts.astype(int).values
+    df["is_exact_duplicate"] = (counts > 1).values
+
+    # Assign a stable group ID to every post that is a duplicate
+    dup_texts = text[counts > 1].unique()
+    group_map = {t: i for i, t in enumerate(dup_texts)}
+    df["duplicate_group_id"] = pd.array(
+        text.map(group_map).values, dtype="Int64"
+    )
+
+    n_dup_posts = int((counts > 1).sum())
+    n_dup_groups = len(dup_texts)
+    logger.info(
+        "Duplicate text flags: %d posts belong to %d duplicate groups "
+        "(%.1f%% of corpus)",
+        n_dup_posts, n_dup_groups,
+        100 * n_dup_posts / max(len(df), 1),
+    )
+    return df
+
+
 def build_profile(
     df: pd.DataFrame,
     id_col: str = "post_id",
